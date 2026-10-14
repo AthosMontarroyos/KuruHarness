@@ -11,6 +11,8 @@ A entrega é a interface funcionando na aplicação. Implementar diretamente nas
 
 ## Fontes e responsabilidades
 
+Para escolhas de stack e arquitetura web, consultar [a skill de web](../web/SKILL.md).
+
 - **Usuário:** fornece objetivos, funcionalidades, conteúdo, restrições, referências e skills; valida a aplicação funcionando. Suas instruções prevalecem sobre padrões das skills.
 - **Contexto e sitemap:** orientam páginas, rotas, navegação e fluxos. Reutilizar a estrutura existente; elaborar um sitemap breve apenas quando o escopo justificar. Não exigir um arquivo ou aprovação separados para isso.
 - **Skills:** orientam as decisões durante a implementação. Usar Impeccable para qualidade visual e de interação, consultando `impeccable:impeccable` no Codex ou a instalação equivalente no Cursor. Isso não cria uma etapa obrigatória de design anterior ao código.
