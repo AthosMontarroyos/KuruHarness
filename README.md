@@ -11,6 +11,12 @@ O projeto terá dois harnesses de compatibilidade:
 
 O suporte aos dois harnesses faz parte do escopo inicial. Os detalhes de arquitetura e implementação serão definidos nas próximas etapas.
 
+## Skill de commit
+
+A skill compartilhada [commit](skills/commit/SKILL.md) analisa as alterações pendentes e cria commits locais separados por intenção: correções (`fix`), funcionalidades (`feat`), refatorações (`refactor`) e outros tipos pertinentes. Mudanças distintas no mesmo arquivo são separadas por trechos; código, testes e documentação da mesma entrega ficam juntos.
+
+Para acioná-la no Cursor ou no Codex, peça: **“Use a skill em skills/commit/SKILL.md para analisar todas as alterações e criar commits separados por intenção.”** A skill confere o conteúdo de cada commit, respeita dependências e informa o que ficou pendente. Não faz push.
+
 ## Arquitetura de UI
 
 O código da aplicação é a fonte principal da UI. Cursor e Codex implementam diretamente nas páginas, rotas e componentes reais, usando o contexto, as referências e as skills fornecidos pelo usuário. O sitemap orienta a estrutura e a navegação quando necessário; o Impeccable orienta a qualidade visual durante a implementação.

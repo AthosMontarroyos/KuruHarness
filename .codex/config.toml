@@ -3,6 +3,10 @@ model = "gpt-6-astra"
 model_reasoning_effort = "medium"
 
 developer_instructions = '''
+## Commits por intenção — regra compartilhada com o Cursor
+
+Quando o usuário solicitar criação ou organização de commits, ler e seguir skills/commit/SKILL.md. Analisar todas as alterações pendentes e criar commits coesos por intenção, distinguindo fix, feat e refactor, inclusive quando coexistirem no mesmo arquivo. Manter testes e documentação relacionados junto da mudança, respeitar dependências e conferir o diff preparado antes de cada commit. O pedido autoriza os commits locais; pedidos apenas de análise não autorizam criá-los. Não fazer push nem reescrever o histórico como parte desse fluxo.
+
 ## Planejamento — regra exclusiva do Codex
 
 As instruções desta seção se aplicam somente ao Codex.
