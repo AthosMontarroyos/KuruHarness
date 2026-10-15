@@ -2,6 +2,10 @@
 
 Projeto em fase inicial, desenvolvido passo a passo.
 
+## Notion
+
+A página do projeto no Notion é [KuruHarness](https://app.notion.com/p/KuruHarness-3faf122a9b1b80ae9badf9f06b1bec16). Por enquanto está vazia.
+
 ## Compatibilidade planejada
 
 O projeto terá dois harnesses de compatibilidade:
