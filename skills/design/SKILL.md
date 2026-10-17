@@ -15,9 +15,9 @@ Para escolhas de stack e arquitetura web, consultar [a skill de web](../web/SKIL
 
 - **Usuário:** fornece objetivos, funcionalidades, conteúdo, restrições, referências e skills; valida a aplicação funcionando. Suas instruções prevalecem sobre padrões das skills.
 - **Contexto e sitemap:** orientam páginas, rotas, navegação e fluxos. Reutilizar a estrutura existente; elaborar um sitemap breve apenas quando o escopo justificar. Não exigir um arquivo ou aprovação separados para isso.
-- **Skills:** orientam as decisões durante a implementação. Usar Impeccable para qualidade visual e de interação, consultando `impeccable:impeccable` no Codex ou a instalação equivalente no Cursor. Isso não cria uma etapa obrigatória de design anterior ao código.
+- **Skills:** orientam as decisões durante a implementação. Usar Impeccable para qualidade visual e de interação. Isso não cria uma etapa obrigatória de design anterior ao código.
 - **Código:** é a fonte principal da UI, incluindo componentes, tokens, estilos, estados, comportamento e assets utilizados pela aplicação.
-- **Cursor e Codex:** seguem estas mesmas instruções e trabalham sobre o mesmo repositório, sem precisar de links ou estado de ferramentas externas para continuar.
+- **Codex e Cursor:** o Codex planeja na cloud e referencia esta skill no plano. O Cursor implementa no repositório, sem precisar de links ou estado de ferramentas externas para continuar.
 
 ## Fluxo
 
@@ -32,4 +32,4 @@ Para escolhas de stack e arquitetura web, consultar [a skill de web](../web/SKIL
 - Registrar apenas decisões duráveis necessárias à continuidade, na documentação existente do projeto. Não duplicar em documentos uma especificação já expressa pelos componentes e tokens.
 - Não criar pastas de design, planos por tela, versões paralelas em HTML ou espelhos da UI como requisito do fluxo. HTML que faz parte da própria aplicação é implementação normal.
 - Referências externas, imagens e designs existentes são insumos opcionais; sua ausência não bloqueia o trabalho. Usar Figma ou produzir um protótipo separado somente quando o usuário pedir explicitamente, sem torná-los dependências das demais tarefas.
-- Em uma passagem entre harnesses, indicar arquivos ou rotas alterados, verificações realizadas e pendências relevantes. Não depender do histórico do chat nem de uma ferramenta de design para retomar a implementação.
+- Na entrega ao Cursor, indicar arquivos ou rotas alterados, verificações realizadas e pendências relevantes. Não depender do histórico do chat nem de uma ferramenta de design para retomar a implementação.

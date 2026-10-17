@@ -5,7 +5,7 @@ description: Analisa as alterações pendentes do projeto e cria commits separad
 
 # Commits por intenção
 
-Ao ser acionada para criar commits, analisar todas as alterações pendentes e executar a separação em commits locais coesos. O pedido já autoriza criar esses commits; apresentar a divisão e prosseguir sem exigir confirmação de rotina. Se o usuário pedir apenas análise ou proposta, não alterar o índice nem criar commits. Estas instruções são compartilhadas pelo Cursor e pelo Codex e usam Git, sem depender de ferramentas exclusivas de um harness.
+Ao ser acionada para criar commits, analisar todas as alterações pendentes e executar a separação em commits locais coesos. O pedido já autoriza criar esses commits; apresentar a divisão e prosseguir sem exigir confirmação de rotina. Se o usuário pedir apenas análise ou proposta, não alterar o índice nem criar commits. O Codex planeja na cloud e o Cursor implementa; esta skill usa Git e não depende de ferramentas exclusivas de um deles.
 
 ## Analisar e agrupar
 
