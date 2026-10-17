@@ -17,7 +17,7 @@ Para escolhas de stack e arquitetura web, consultar [a skill de web](../web/SKIL
 - **Contexto e sitemap:** orientam páginas, rotas, navegação e fluxos. Reutilizar a estrutura existente; elaborar um sitemap breve apenas quando o escopo justificar. Não exigir um arquivo ou aprovação separados para isso.
 - **Skills:** orientam as decisões durante a implementação. Usar Impeccable para qualidade visual e de interação. Isso não cria uma etapa obrigatória de design anterior ao código.
 - **Código:** é a fonte principal da UI, incluindo componentes, tokens, estilos, estados, comportamento e assets utilizados pela aplicação.
-- **Codex e Cursor:** o Codex planeja na cloud e referencia esta skill no plano. O Cursor implementa no repositório, sem precisar de links ou estado de ferramentas externas para continuar.
+- **Codex e Cursor:** o Codex planeja na cloud. O Cursor implementa no repositório da tarefa. A continuidade usa arquivos, rotas e decisões desse repositório.
 
 ## Fluxo
 

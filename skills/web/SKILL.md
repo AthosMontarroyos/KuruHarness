@@ -20,4 +20,4 @@ A razão é preservar o máximo de liberdade para planejar uma arquitetura próp
 
 Ao implementar ou alterar interfaces, seguir [a skill de design](../design/SKILL.md), trabalhando diretamente no código da aplicação.
 
-O Codex referencia esta preferência ao planejar na cloud. O Cursor a aplica ao implementar. Mantê-la nesta skill de web, sem duplicá-la nas instruções do Codex.
+Esta preferência é global. O Codex a considera ao planejar e o Cursor a aplica ao implementar.
