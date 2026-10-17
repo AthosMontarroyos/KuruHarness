@@ -1,9 +1,0 @@
-# Preferencias reutilizaveis do Codex.
-# As instrucoes ficam no ChatGPT, no campo Codex instructions.
-# A copia versionada e README.md. Nao duplicar instrucoes neste arquivo.
-model = "gpt-6-astra"
-model_reasoning_effort = "medium"
-
-[desktop]
-followUpQueueMode = "steer"
-conversationDetailMode = "STEPS_COMMANDS"
