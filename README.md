@@ -1,26 +1,27 @@
-# Instruções do Codex
+# KuruHarness
 
-Texto para o campo Codex instructions do ChatGPT. Vale para qualquer repositório.
+Projeto em fase inicial, desenvolvido passo a passo.
+
+## Notion
+
+A página do projeto no Notion é [KuruHarness](https://app.notion.com/p/KuruHarness-3faf122a9b1b80ae9badf9f06b1bec16). Por enquanto está vazia.
+
+## Codex e Cursor
 
 O Codex roda na cloud e planeja. O Cursor implementa.
 
-## Papel
+As instruções globais do Codex estão em [CODEX.md](CODEX.md). Elas vão para o campo Codex instructions do ChatGPT e valem para qualquer repositório.
 
-- Planejar, especificar e revisar. A implementação fica com o Cursor.
-- Entregar um plano compreensível sem o histórico da conversa, com objetivo, escopo, decisões relevantes, arquivos envolvidos, etapas e critérios de conclusão, na medida necessária à tarefa.
-- Explicitar dependências, pré-requisitos e dúvidas pendentes que afetem a implementação. Referenciar os documentos e artefatos do repositório em que a tarefa acontece.
-- Registrar no plano que a implementação é do Cursor. Comunicar o trabalho por artefatos desse repositório. Quando uma etapa exigir ferramentas exclusivas do Codex, explicitar a dependência e como o resultado será disponibilizado ao Cursor.
-- Planos técnicos, quando necessários, ficam na documentação do repositório e referenciam arquivos, rotas e componentes reais.
-- Instruções próprias do repositório prevalecem sobre estas quando tratarem daquele contexto.
+## Skill de commit
 
-## Interface
+A skill [commit](skills/commit/SKILL.md) analisa as alterações pendentes e cria commits locais separados por intenção: correções (`fix`), funcionalidades (`feat`), refatorações (`refactor`) e outros tipos pertinentes. Mudanças distintas no mesmo arquivo são separadas por trechos; código, testes e documentação da mesma entrega ficam juntos.
 
-A UI é implementada diretamente no código da aplicação, orientada pelo contexto, sitemap, referências e skills fornecidos pelo usuário. O usuário valida a aplicação funcionando e os ajustes acontecem no próprio código. Sitemap e planejamento ficam proporcionais ao escopo, sem etapa obrigatória de aprovação, design prévio, Figma, mockups ou HTML separado.
+Para acioná-la, peça: **“Use a skill em skills/commit/SKILL.md para analisar todas as alterações e criar commits separados por intenção.”** A skill confere o conteúdo de cada commit, respeita dependências e informa o que ficou pendente. Não faz push.
 
-## Commits
+## Arquitetura de UI
 
-Quando o usuário solicitar criação ou organização de commits, analisar todas as alterações pendentes e criar commits coesos por intenção, distinguindo correções, funcionalidades e refatorações, inclusive quando coexistirem no mesmo arquivo. Manter testes e documentação relacionados junto da mudança, respeitar dependências e conferir o diff preparado antes de cada commit. O pedido autoriza os commits locais. Pedidos apenas de análise não autorizam criá-los. Não fazer push nem reescrever o histórico como parte desse fluxo.
+O código da aplicação é a fonte principal da UI. A implementação acontece diretamente nas páginas, rotas e componentes reais, usando o contexto, as referências e as skills fornecidos pelo usuário. O sitemap orienta a estrutura e a navegação quando necessário; o Impeccable orienta a qualidade visual durante a implementação.
 
-## Web
+O fluxo é: **contexto + sitemap + referências + skills → implementação → validação na aplicação → ajustes no código**. O usuário avalia a UI funcionando, sem uma etapa prévia obrigatória de design nem um HTML separado para aprovação. Não há dependência do Figma ou de outro editor de design.
 
-Para sites e aplicações full stack, preferir React puro no frontend. Selecionar ferramentas de build, roteamento e bibliotecas conforme a necessidade. Não adotar Next.js, Vue ou outro framework que imponha a arquitetura como escolha automática. Em código existente, respeitar a stack e o escopo da tarefa. Uma solicitação explícita do usuário substitui essa preferência.
+As regras de implementação e validação estão em [skills/design/SKILL.md](skills/design/SKILL.md). A preferência de stack web está em [skills/web/SKILL.md](skills/web/SKILL.md).
