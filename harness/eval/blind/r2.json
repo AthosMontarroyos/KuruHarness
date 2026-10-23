@@ -1,0 +1,42 @@
+[
+ {
+  "id": "r2-01",
+  "diff": "diff --git a/.claude/agents/reviewer.md b/.claude/agents/reviewer.md\nnew file mode 100644\nindex 0000000..a1b2c3d\n--- /dev/null\n+++ b/.claude/agents/reviewer.md\n@@ -0,0 +1,7 @@\n+---\n+name: reviewer\n+description: Revisa diffs e aponta violações das regras do projeto.\n+tools: Read, Grep\n+---\n+\n+Você recebe só o diff e as regras relevantes. Liste violações com arquivo e linha.\n"
+ },
+ {
+  "id": "r2-02",
+  "diff": "diff --git a/.claude/agents/tester.md b/.claude/agents/tester.md\nindex 1a2b3c4..5d6e7f8 100644\n--- a/.claude/agents/tester.md\n+++ b/.claude/agents/tester.md\n@@ -1,7 +1,6 @@\n ---\n name: tester\n description: Roda os testes e resume falhas.\n-model: haiku\n tools: Bash, Read\n ---\n \n Execute a suíte e reporte só as falhas.\n"
+ },
+ {
+  "id": "r2-03",
+  "diff": "diff --git a/.claude/agents/doc-writer.md b/.claude/agents/doc-writer.md\nnew file mode 100644\nindex 0000000..a1b2c3d\n--- /dev/null\n+++ b/.claude/agents/doc-writer.md\n@@ -0,0 +1,8 @@\n+---\n+name: doc-writer\n+description: Atualiza documentação curta.\n+model:\n+tools: Read, Edit\n+---\n+\n+Escreva documentação objetiva em português.\n"
+ },
+ {
+  "id": "r2-04",
+  "diff": "diff --git a/.claude/agents/planner.md b/.claude/agents/planner.md\nnew file mode 100644\nindex 0000000..a1b2c3d\n--- /dev/null\n+++ b/.claude/agents/planner.md\n@@ -0,0 +1,9 @@\n+---\n+name: planner\n+description: Planeja tarefas multi-arquivo.\n+tools: Read, Grep, Glob\n+---\n+\n+model: opus\n+\n+Planeje em passos pequenos e verificáveis.\n"
+ },
+ {
+  "id": "r2-05",
+  "diff": "diff --git a/.claude/agents/linter.md b/.claude/agents/linter.md\nnew file mode 100644\nindex 0000000..a1b2c3d\n--- /dev/null\n+++ b/.claude/agents/linter.md\n@@ -0,0 +1,8 @@\n+---\n+name: linter\n+description: Corrige problemas de lint em um arquivo.\n+models: haiku\n+tools: Read, Edit\n+---\n+\n+Corrija apenas o que o linter reportar.\n"
+ },
+ {
+  "id": "r2-06",
+  "diff": "diff --git a/.claude/agents/triage.md b/.claude/agents/triage.md\nnew file mode 100644\nindex 0000000..a1b2c3d\n--- /dev/null\n+++ b/.claude/agents/triage.md\n@@ -0,0 +1,8 @@\n+---\n+name: triage\n+description: Classifica tarefas por complexidade.\n+model: haiku\n+tools: Read\n+---\n+\n+Classifique a tarefa como trivial, média ou complexa.\n"
+ },
+ {
+  "id": "r2-07",
+  "diff": "diff --git a/.claude/agents/coder.md b/.claude/agents/coder.md\nindex 1a2b3c4..5d6e7f8 100644\n--- a/.claude/agents/coder.md\n+++ b/.claude/agents/coder.md\n@@ -1,7 +1,7 @@\n ---\n name: coder\n-description: Implementa mudanças.\n+description: Implementa mudanças pequenas e coesas em um arquivo.\n model: sonnet\n tools: Read, Edit, Bash\n ---\n \n"
+ },
+ {
+  "id": "r2-08",
+  "diff": "diff --git a/docs/agents-guide.md b/docs/agents-guide.md\nnew file mode 100644\nindex 0000000..a1b2c3d\n--- /dev/null\n+++ b/docs/agents-guide.md\n@@ -0,0 +1,8 @@\n+# Guia de subagents\n+\n+Todo subagent deve ter nome e description.\n+\n+Exemplo de frontmatter:\n+\n+    name: exemplo\n+    description: faz algo\n"
+ },
+ {
+  "id": "r2-09",
+  "diff": "diff --git a/.claude/agents/architect.md b/.claude/agents/architect.md\nnew file mode 100644\nindex 0000000..a1b2c3d\n--- /dev/null\n+++ b/.claude/agents/architect.md\n@@ -0,0 +1,8 @@\n+---\n+name: architect\n+description: Decide arquitetura e interfaces.\n+model: \"opus\"\n+tools: Read, Grep, Glob\n+---\n+\n+Proponha a arquitetura e justifique trade-offs.\n"
+ },
+ {
+  "id": "r2-10",
+  "diff": "diff --git a/.claude/agents/summarizer.md b/.claude/agents/summarizer.md\nnew file mode 100644\nindex 0000000..a1b2c3d\n--- /dev/null\n+++ b/.claude/agents/summarizer.md\n@@ -0,0 +1,10 @@\n+---\n+name: summarizer\n+description: Resume logs longos.\n+tools: Read, Grep\n+color: blue\n+permissionMode: default\n+model: inherit\n+---\n+\n+Resuma o log em até 10 linhas.\n"
+ }
+]
