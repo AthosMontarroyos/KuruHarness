@@ -19,19 +19,20 @@ def validate(rec):
     attempts = rec.get("attempts")
     if not isinstance(attempts, int) or isinstance(attempts, bool) or not 1 <= attempts <= MAX_ATTEMPTS:
         raise ValueError(f"attempts deve ser inteiro entre 1 e {MAX_ATTEMPTS}")
-    for key in ("tokens_in", "tokens_out"):
-        v = rec.get(key)
+    for key in ("tokens_in", "tokens_out", "tokens_cache"):
+        v = rec.get(key, 0)  # tokens_cache é opcional (registros antigos não têm)
         if not isinstance(v, int) or isinstance(v, bool) or v < 0:
             raise ValueError(f"{key} deve ser inteiro >= 0")
 
 
-def append_record(task_id, model, tokens_in, tokens_out, result, attempts, path=DEFAULT_PATH, ts=None):
+def append_record(task_id, model, tokens_in, tokens_out, result, attempts, path=DEFAULT_PATH, ts=None, tokens_cache=0):
     rec = {
         "ts": ts or datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "task_id": task_id,
         "model": model,
         "tokens_in": tokens_in,
         "tokens_out": tokens_out,
+        "tokens_cache": tokens_cache,
         "result": result,
         "attempts": attempts,
     }
@@ -61,10 +62,11 @@ def summarize(path=DEFAULT_PATH):
         except (ValueError, AttributeError):
             skipped += 1
             continue
-        a = acc.setdefault(rec["model"], {"count": 0, "tokens_in": 0, "tokens_out": 0, "ok": 0, "attempts": 0})
+        a = acc.setdefault(rec["model"], {"count": 0, "tokens_in": 0, "tokens_out": 0, "tokens_cache": 0, "ok": 0, "attempts": 0})
         a["count"] += 1
         a["tokens_in"] += rec["tokens_in"]
         a["tokens_out"] += rec["tokens_out"]
+        a["tokens_cache"] += rec.get("tokens_cache", 0)
         a["ok"] += rec["result"] == "ok"
         a["attempts"] += rec["attempts"]
     out = {
@@ -72,6 +74,7 @@ def summarize(path=DEFAULT_PATH):
             "count": a["count"],
             "tokens_in": a["tokens_in"],
             "tokens_out": a["tokens_out"],
+            "tokens_cache": a["tokens_cache"],
             "success_rate": round(a["ok"] / a["count"], 3),
             "avg_attempts": round(a["attempts"] / a["count"], 3),
         }
@@ -90,6 +93,7 @@ def main(argv=None):
     add.add_argument("--model", required=True)
     add.add_argument("--tokens-in", type=int, required=True)
     add.add_argument("--tokens-out", type=int, required=True)
+    add.add_argument("--tokens-cache", type=int, default=0)
     add.add_argument("--result", choices=sorted(VALID_RESULTS), required=True)
     add.add_argument("--attempts", type=int, required=True)
     add.add_argument("--path", default=DEFAULT_PATH)
@@ -101,7 +105,7 @@ def main(argv=None):
     if args.cmd == "add":
         try:
             append_record(args.task_id, args.model, args.tokens_in, args.tokens_out,
-                          args.result, args.attempts, path=args.path)
+                          args.result, args.attempts, path=args.path, tokens_cache=args.tokens_cache)
         except ValueError as e:
             print(f"erro: {e}", file=sys.stderr)
             return 1
@@ -115,7 +119,7 @@ def main(argv=None):
             if m == "_skipped":
                 print(f"linhas ignoradas: {s}")
                 continue
-            print(f"{m}: n={s['count']} in={s['tokens_in']} out={s['tokens_out']} "
+            print(f"{m}: n={s['count']} in={s['tokens_in']} out={s['tokens_out']} cache={s['tokens_cache']} "
                   f"ok={s['success_rate']} tentativas={s['avg_attempts']}")
     return 0
 

@@ -38,9 +38,18 @@ class TaskLogTest(unittest.TestCase):
         self.add(model="haiku", result="fail", attempts=3, tokens_in=20)
         self.add(model="opus", result="ok", attempts=2)
         s = tasklog.summarize(self.path)
-        self.assertEqual(s["haiku"], {"count": 2, "tokens_in": 30, "tokens_out": 10,
+        self.assertEqual(s["haiku"], {"count": 2, "tokens_in": 30, "tokens_out": 10, "tokens_cache": 0,
                                       "success_rate": 0.5, "avg_attempts": 2.0})
         self.assertEqual(s["opus"]["avg_attempts"], 2.0)
+
+    def test_old_records_without_tokens_cache_still_summarize(self):
+        self.path.parent.mkdir(parents=True)
+        old = {"ts": "t", "task_id": "x", "model": "m", "tokens_in": 1, "tokens_out": 2, "result": "ok", "attempts": 1}
+        self.path.write_text(json.dumps(old) + "\n")
+        self.add(model="m", tokens_cache=7)
+        s = tasklog.summarize(self.path)
+        self.assertEqual((s["m"]["count"], s["m"]["tokens_cache"]), (2, 7))
+        self.assertNotIn("_skipped", s)
 
     def test_missing_file_is_empty(self):
         self.assertEqual(tasklog.summarize(self.path), {})

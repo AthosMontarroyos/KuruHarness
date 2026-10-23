@@ -3,6 +3,8 @@
 # Reprova (exit 2) devolvendo o erro ao Claude. Máximo de 3 tentativas por tarefa.
 set -u
 cd "${CLAUDE_PROJECT_DIR:-.}"
+# O Claude Code passa um JSON (session_id, transcript_path) no stdin; sem stdin, segue sem ele.
+HOOK_INPUT=""; if [ ! -t 0 ]; then HOOK_INPUT=$(timeout 2 cat 2>/dev/null || true); fi; export HOOK_INPUT
 STATE=.claude/state; mkdir -p "$STATE"
 MAX=3
 n=$(cat "$STATE/attempts" 2>/dev/null || echo 0)
@@ -25,12 +27,20 @@ fi
 [ -f tests/__init__.py ] && command -v python3 >/dev/null && run unittest python3 -m unittest discover -s tests -t . -q
 [ -f harness/check_rules.py ] && command -v python3 >/dev/null && run regras python3 -m harness.check_rules
 
+log_task() { # resultado, tentativas -> .claude/state/tasks.jsonl (nunca derruba o hook)
+  [ -f harness/hooklog.py ] && command -v python3 >/dev/null && python3 -m harness.hooklog --result "$1" --attempts "$2" 2>/dev/null || true
+}
+dirty=$(git status --porcelain -- . ':!.claude/state' 2>/dev/null | head -n 1)
+
 if [ $fail -eq 0 ]; then
+  # só registra quando houve trabalho (mudanças pendentes ou falhas anteriores)
+  if [ -n "$dirty" ] || [ "$n" -gt 0 ]; then log_task ok $((n+1)); fi
   echo 0 > "$STATE/attempts"; exit 0
 fi
 
 n=$((n+1)); echo $n > "$STATE/attempts"
 if [ $n -ge $MAX ]; then
+  log_task fail "$MAX"
   echo "Limite de $MAX tentativas atingido. Pare e reporte ao usuário o que falhou:$out" >&2
   echo 0 > "$STATE/attempts"; exit 0   # libera a parada para o humano decidir
 fi

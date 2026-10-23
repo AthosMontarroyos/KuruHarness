@@ -17,7 +17,8 @@ Formato: `- [status] id — descrição (modelo, tentativas, resultado)`. Status
 
 ## Fase 6 — Medição (antecipada como tarefa real da Fase 1)
 - [x] 6.1 — `harness/tasklog.py` + `tests/test_tasklog.py` (JSONL em `.claude/state/tasks.jsonl`, resumo por modelo)
-- [ ] 6.2 — Integrar ao hook: gravar tentativas/resultado automaticamente (hoje o registro é manual; tokens não são acessíveis ao hook)
+- [x] 6.2 — Hook `end-of-task.sh` grava em `.claude/state/tasks.jsonl` via `harness/hooklog.py`: `ok` com tentativas = falhas anteriores + 1, ou `fail` com 3 no limite; só registra quando há mudanças pendentes ou falhas anteriores (árvore limpa não vira "tarefa"). Modelo e tokens vêm do `transcript_path` que o hook recebe no stdin (testado contra o transcript real: modelo `claude-sonnet-5-5` lido; delta por sessão, 2ª parada = 0). `tokens_in` = entrada nova + criação de cache; `tokens_cache` = leitura de cache, campo novo e opcional, porque nesta sessão 99% do 'input' era leitura de cache (62,8M de 63,7M) e misturar distorceria o custo. 29 testes verdes (3 cenários do hook rodando o script de verdade). Limitações: formato do transcript não é API estável (leitura defensiva, cai para `unknown`/0); só conta o transcript principal, tokens de sub-agents ficam de fora; o 1º registro de uma sessão engloba tudo desde o início dela; sem `KURU_TASK_ID` cada parada vira um task_id novo
+- [x] 6.3 — Higiene: 8 arquivos `.pyc` tinham sido versionados por engano; removidos do índice e `__pycache__/` ignorado
 
 ## Fase 2 — Verificador de conformidade
 - [x] 2.1 — Critério de pronto: `reviewer` (Haiku) reprovou de propósito um diff com token literal e sem `model` (violando regras 1 e 2 do SPEC) e aprovou o diff corrigido

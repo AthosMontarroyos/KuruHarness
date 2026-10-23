@@ -52,7 +52,9 @@ class RulesTest(unittest.TestCase):
     def test_labeled_cases(self):
         wrong = []
         for f in sorted(glob.glob(os.path.join(EVAL, "cases_*.json"))):
-            for c in json.load(open(f)):
+            with open(f, encoding="utf-8") as fh:
+                cases = json.load(fh)
+            for c in cases:
                 if c["id"] in KNOWN_MISSES:
                     continue
                 if bool(check_diff(c["diff"])) != (c["label"] == "violates"):
