@@ -11,6 +11,9 @@ Harness de sub-agents do Claude Code. O plano completo e os critérios de pronto
 - Nunca grave tokens, chaves ou segredos no repositório. `MCP_TOKEN` e afins vivem só como secrets do Worker.
 - Commits coesos por intenção, em português, sem push forçado nem reescrita de histórico.
 
+## Fluxo de revisão (Fase 2)
+Use `/review <task-id>`. Ordem fixa: 1) `harness/check_rules.py` (grátis, sem modelo); 2) `reviewer` (Haiku) recebendo só o pacote `regras relevantes + diff` gerado por `python3 -m harness.review_flow check`; 3) `reviewer-senior` (Opus) somente depois de 2 reprovações do Haiku na mesma tarefa. Toda reprovação (determinística ou de modelo) conta para o limite de 3 tentativas; na 3ª, parar e reportar. Estado em `.claude/state/reviews.json`.
+
 ## Roteamento inicial (proposta; ajustar com os logs da Fase 6)
 - Trivial (1 arquivo, baixo risco): Haiku.
 - Média: Sonnet.
