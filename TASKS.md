@@ -41,5 +41,5 @@ Formato: `- [status] id — descrição (modelo, tentativas, resultado)`. Status
 - [x] R.3 — `.claude/settings.json` ganhou `permissions.allow` estreito (só os comandos do harness e `git diff/status`), senão cada passo do `/task` pediria aprovação. Limitação: o Claude Code ignora `permissions.allow` de workspace não confiável (foi o que ocorreu no clone temporário); no repo real vale depois de aceitar a confiança uma vez
 - [ ] R.4 — Usar o roteador com o Jev ao vivo (`apply_jev` está testado só com respostas simuladas)
 - [ ] R.5 — Fase 3 (Cursor): script de execução em git worktree, no máximo 3 em paralelo, sessão nova por tarefa; dá para escrever e testar com um `agent` falso, mas a execução real depende do Cursor CLI no PC do usuário
-- [ ] R.6 — Fase 5: fluxo `/fallback` do DeepSeek (só texto): filtro de dados sensíveis antes de enviar, extrair o diff da resposta, `git apply --check`, `/review`, só então aplicar
-- [ ] R.7 — Fase 6: relatório do `tasklog` que sugira ajuste de roteamento; precisa de mais tarefas reais no log antes (hoje todas OK na 1ª tentativa)
+- [x] R.6 — Fase 5: comando `/fallback` (filtro de dados sensíveis, pedir diff unificado, `git apply --check`, aplicar, checagens e `/review`). Verificado com o DeepSeek de verdade: devolveu um diff válido em bloco ```diff e o `git apply --check` o aceitou. Sem código novo, só o comando
+- [ ] R.7 — Fase 6: ajustar o roteamento com os dados do `tasklog` (`python3 -m harness.tasklog summary`). Não precisa de código novo: basta acumular tarefas reais e olhar o resumo
