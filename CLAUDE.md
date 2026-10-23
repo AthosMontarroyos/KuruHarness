@@ -2,6 +2,9 @@
 
 Harness de sub-agents do Claude Code. O plano completo e os critérios de pronto de cada fase estão em `SPEC.md`. O estado vivo das tarefas está em `TASKS.md`.
 
+## Escopo
+Este harness é do agente de código (Claude Code). O agente pessoal do usuário, e a futura migração dele para a Cloudflare, é outro projeto e está fora do escopo daqui. Por enquanto o DeepSeek segue como reserva usando o saldo que o usuário já tem lá, com o teto de US$ 5/mês aplicado pelo Worker.
+
 ## Regras gerais
 - Só avance de fase quando o critério de pronto da fase atual passar. Registre o resultado em `TASKS.md`.
 - Máximo de 3 tentativas por tarefa. Na terceira falha, pare e reporte; não tente uma quarta.
