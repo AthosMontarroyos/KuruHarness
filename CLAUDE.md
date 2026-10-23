@@ -5,7 +5,7 @@ Harness de sub-agents do Claude Code. O plano completo e os critérios de pronto
 ## Regras gerais
 - Só avance de fase quando o critério de pronto da fase atual passar. Registre o resultado em `TASKS.md`.
 - Máximo de 3 tentativas por tarefa. Na terceira falha, pare e reporte; não tente uma quarta.
-- Teto de custo: US$ 5/mês em DeepSeek (saldo real de US$ 5, cuidado) e em Higgsfield. Antes de chamar, confira o gasto do mês; ao atingir o teto, não chame e avise o usuário. Jev não tem teto (usuário informa que não cobra); ainda assim, evite chamadas em loop.
+- Teto de custo: US$ 5/mês em DeepSeek (saldo real de US$ 5, cuidado) e em Higgsfield. O Worker bloqueia o DeepSeek sozinho ao chegar a US$ 5 estimados (ferramenta `budget_status` mostra o gasto; é estimativa, o saldo real está no painel do DeepSeek). Higgsfield ainda sem bloqueio automático: confira o gasto antes de chamar e avise o usuário ao se aproximar do teto. Jev não tem teto (usuário informa que não cobra); ainda assim, evite chamadas em loop.
 - Agentes em paralelo: de 3 a 5.
 - O revisor recebe só o diff e as regras relevantes, nunca o projeto inteiro.
 - Nunca grave tokens, chaves ou segredos no repositório. `MCP_TOKEN` e afins vivem só como secrets do Worker.
