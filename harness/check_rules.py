@@ -96,7 +96,7 @@ def check_r5_lines(path, lines):
             out.append(("R5", path, n, "loop sem limite no hook"))
         if name == "CLAUDE.md" or name.endswith(".md"):
             for k in re.finditer(r"(\d+)\s*(?:vezes|tentativas)", line):
-                if int(k.group(1)) != 3 and "paralelo" not in line.lower():
+                if int(k.group(1)) != 3 and re.search(r"(?i)tent", line) and "paralelo" not in line.lower():
                     out.append(("R5", path, n, "limite de tentativas diferente de 3"))
     return out
 

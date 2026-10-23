@@ -46,6 +46,8 @@ class RulesTest(unittest.TestCase):
         self.assertFalse(check_diff(diff("harness/tasklog.py", "+MAX_ATTEMPTS = 3")))
         self.assertTrue(check_diff(diff("scripts/end-of-task.sh", "+while true; do")))
         self.assertFalse(check_diff(diff("CLAUDE.md", "+- Agentes em paralelo: de 3 a 5.")))
+        self.assertFalse(check_diff(diff("a.md", "+O revisor barato reprovou 2 vezes este diff.")))
+        self.assertTrue(check_diff(diff("CLAUDE.md", "+- Se falhar, tente até 5 vezes.")))
 
     def test_labeled_cases(self):
         wrong = []
