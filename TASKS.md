@@ -24,4 +24,5 @@ Formato: `- [status] id — descrição (modelo, tentativas, resultado)`. Status
 
 ## Fase 4 — Jev como porteiro
 - [x] 4.0 — `ask_jev` funcional (formato `state` + `questions` tipadas). Teste único: diff com token literal → `veredito=reprovar` (0.97), `segredo=0.96`; `sem_model` só 0.74 (pergunta de ausência é mais fraca)
-- [ ] 4.1 — Montar 50–100 casos rotulados (decisões de meio de tarefa e diffs) e comparar Jev × Haiku; entra só se a acurácia nos casos de alta confiança for aceitável
+- [~] 4.1 — Casos rotulados e comparação Jev × Haiku (`harness/eval/`, `python3 harness/eval/score.py`). Rodados 40 casos (R1, R2, R4, R5); os 10 mistos têm rótulo e resposta do Haiku, mas o Jev não foi rodado neles. Resultado: Jev 35/40 (87,5%), Haiku 39/40 (97,5%). Jev em alta confiança (>=0,8): 29/34 (85%); errou com confiança 0,98 em R2 (`model:` vazio, `model` no corpo, typo `models:`) e em R4. **Critério de entrada como porteiro de diffs NÃO atendido.** Limitações: rótulos sintéticos (gerados por LLM, sem conferência humana), r1 usou pergunta sem as regras no texto, r4-05 tem rótulo discutível (ambos erraram).
+- [ ] 4.2 — Decisão: usar Jev só em decisões semânticas de baixo risco no meio da tarefa; regras estruturais (R1 regex, R2 parse do frontmatter) ficam em checagem determinística + Haiku. Pendente: validar com o usuário e rodar o Jev nos 10 mistos
