@@ -48,6 +48,9 @@ class RulesTest(unittest.TestCase):
         self.assertFalse(check_diff(diff("CLAUDE.md", "+- Agentes em paralelo: de 3 a 5.")))
         self.assertFalse(check_diff(diff("a.md", "+O revisor barato reprovou 2 vezes este diff.")))
         self.assertTrue(check_diff(diff("CLAUDE.md", "+- Se falhar, tente até 5 vezes.")))
+        self.assertTrue(check_diff(diff("CLAUDE.md", "+- Máximo de quatro tentativas por tarefa.")))
+        self.assertTrue(check_diff(diff("CLAUDE.md", "+- Pode tentar de novo; na quarta falha, pare e reporte.")))
+        self.assertFalse(check_diff(diff("CLAUDE.md", "+- Máximo de três tentativas por tarefa. Na terceira falha, pare.")))
 
     def test_labeled_cases(self):
         wrong = []
