@@ -18,6 +18,7 @@ STATE = Path(".claude/state/reviews.json")
 MAX_ATTEMPTS = 3
 ESCALATE_AFTER = 2  # reprovações do Haiku antes de chamar o Opus
 STAGES = ("deterministic", "reviewer", "reviewer-senior")
+MAX_PACKET_CHARS = 12000  # o pacote vai INLINE no prompt do revisor: pacotes grandes são divididos
 
 
 def _load(path=STATE):
@@ -60,6 +61,38 @@ def packet(diff, spec_path="SPEC.md"):
     return "REGRAS RELEVANTES:\n" + "\n".join(lines) + "\n\nDIFF:\n" + diff
 
 
+def split_diff(diff):
+    """Divide o diff em blocos por arquivo (cabeçalho `--- `/`diff --git`)."""
+    blocks, cur = [], []
+    for line in diff.splitlines(keepends=True):
+        starts_file = line.startswith("diff --git") or (line.startswith("--- ") and not (cur and cur[-1].startswith("diff --git")))
+        if starts_file and cur and any(l.startswith("+++ ") for l in cur):
+            blocks.append("".join(cur))
+            cur = []
+        cur.append(line)
+    if cur:
+        blocks.append("".join(cur))
+    return blocks
+
+
+def packets(diff, spec_path="SPEC.md", limit=None):
+    """Lista de pacotes (regras relevantes + diff) de até `limit` caracteres, agrupando por arquivo.
+
+    Um arquivo maior que o limite vira um pacote sozinho (não é cortado no meio).
+    """
+    limit = limit or MAX_PACKET_CHARS
+    groups, cur, size = [], [], 0
+    for b in split_diff(diff):
+        if cur and size + len(b) > limit:
+            groups.append("".join(cur))
+            cur, size = [], 0
+        cur.append(b)
+        size += len(b)
+    if cur:
+        groups.append("".join(cur))
+    return [packet(g, spec_path) for g in groups] or [packet(diff, spec_path)]
+
+
 def next_agent(entry):
     return "reviewer-senior" if entry.get("reviewer", 0) >= ESCALATE_AFTER else "reviewer"
 
@@ -83,8 +116,9 @@ def check(task, diff, state_path=STATE, spec_path="SPEC.md"):
         if total_rejections(entry) >= MAX_ATTEMPTS:
             out["next"] = "PARAR"
         return out
+    pk = packets(diff, spec_path)
     return {"stage": "reviewer", "verdict": "PENDENTE", "agent": next_agent(entry),
-            "packet": packet(diff, spec_path)}
+            "packet": pk[0] if len(pk) == 1 else None, "packets": pk}
 
 
 def record(task, stage, verdict, state_path=STATE):

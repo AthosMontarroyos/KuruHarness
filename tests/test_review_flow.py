@@ -38,6 +38,29 @@ class FlowTest(unittest.TestCase):
         self.assertEqual(out["proximo_revisor"], "reviewer-senior")
         self.assertEqual(self.check(GOOD)["agent"], "reviewer-senior")
 
+    def test_small_diff_is_one_packet(self):
+        out = self.check(GOOD)
+        self.assertEqual(len(out["packets"]), 1)
+        self.assertEqual(out["packet"], out["packets"][0])
+
+    def test_large_diff_is_split_by_file_with_own_rules(self):
+        big = "".join(
+            f"--- a/{n}\n+++ b/{n}\n@@ -1,0 +1,40 @@\n" + "".join(f"+linha {i} de {n}\n" for i in range(40))
+            for n in ("TASKS.md", "docs/a.md", "docs/b.md")
+        )
+        pk = rf.packets(big, limit=600)
+        self.assertGreater(len(pk), 1)
+        joined = "".join(pk)
+        for n in ("TASKS.md", "docs/a.md", "docs/b.md"):
+            self.assertEqual(joined.count(f"+++ b/{n}"), 1)  # nenhum arquivo cortado ou repetido
+        self.assertIn("4. Nenhuma fase", pk[0])  # TASKS.md -> regra 4
+        self.assertNotIn("4. Nenhuma fase", pk[-1])  # o pacote sem TASKS.md não carrega a regra 4
+        old, rf.MAX_PACKET_CHARS = rf.MAX_PACKET_CHARS, 600
+        self.addCleanup(setattr, rf, "MAX_PACKET_CHARS", old)
+        out = rf.check("g", big, state_path=self.state)
+        self.assertIsNone(out["packet"])
+        self.assertGreater(len(out["packets"]), 1)
+
     def test_stops_at_three_rejections(self):
         rf.record("t", "reviewer", "REPROVADO", self.state)
         rf.record("t", "reviewer", "REPROVADO", self.state)

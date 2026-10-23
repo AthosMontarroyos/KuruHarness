@@ -9,8 +9,8 @@ Revise as mudanças da tarefa `$1` seguindo SEMPRE esta ordem. Não pule etapas 
    - `verdict: PARAR`: pare, reporte ao usuário o que falhou nas 3 tentativas. Não tente uma quarta.
    - `stage: deterministic` com `REPROVADO`: corrija as `violations` e volte ao passo 1. Nenhum modelo foi gasto.
    - `verdict: PENDENTE`: siga para o passo 3.
-3. Chame o sub-agent indicado em `agent` (`reviewer` ou `reviewer-senior`) passando APENAS o campo `packet` (regras relevantes + diff).
-4. Registre o veredito dele: `python3 -m harness.review_flow record --task $1 --stage <agent> --verdict APROVADO|REPROVADO`.
+3. Chame o sub-agent indicado em `agent` (`reviewer` ou `reviewer-senior`) uma vez para CADA item de `packets`, colando o texto do pacote INLINE no prompt. Nunca passe caminho de arquivo nem peça para ele ler nada: os revisores não têm ferramentas e não recebem o CLAUDE.md (regra 3 do SPEC). Se `packets` tiver mais de um item, o veredito da rodada é REPROVADO se qualquer pacote for reprovado, e APROVADO só se todos forem aprovados.
+4. Registre o veredito da rodada uma única vez: `python3 -m harness.review_flow record --task $1 --stage <agent> --verdict APROVADO|REPROVADO`.
    - `next: FIM`: revisão concluída.
    - `next: CORRIGIR`: corrija com base nos motivos e volte ao passo 1 (o `proximo_revisor` já considera a escalada).
    - `next: PARAR`: reporte ao usuário.
