@@ -33,6 +33,9 @@ def report(name, pred, ids, conf=None, thr=0.8):
 ids = sorted(jev)
 report("Jev  ", {i: jev[i][0] for i in ids}, ids, {i: jev[i][1] for i in ids})
 report("Haiku", hk, ids)
+from harness.check_rules import check_diff  # noqa: E402
+det = {c: bool(check_diff(d)) for f in glob.glob(f"{D}/blind/*.json") for c, d in ((x["id"], x["diff"]) for x in json.load(open(f)))}
+report("Determinístico (regras escritas DEPOIS de ver os casos, resultado otimista)", det, ids)
 for p in ("r1", "r2", "r4", "r5"):
     sub = [i for i in ids if i.startswith(p)]
     a = sum(jev[i][0] == (labels[i] == "violates") for i in sub)

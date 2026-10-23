@@ -23,6 +23,7 @@ fi
 [ -f pyproject.toml ] && command -v ruff   >/dev/null && run ruff ruff check .
 [ -f pyproject.toml ] && command -v mypy   >/dev/null && run mypy mypy .
 [ -f tests/__init__.py ] && command -v python3 >/dev/null && run unittest python3 -m unittest discover -s tests -t . -q
+[ -f harness/check_rules.py ] && command -v python3 >/dev/null && run regras python3 -m harness.check_rules
 
 if [ $fail -eq 0 ]; then
   echo 0 > "$STATE/attempts"; exit 0
