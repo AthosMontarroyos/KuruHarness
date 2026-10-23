@@ -16,8 +16,9 @@ def diff(path, *body):
 
 class RulesTest(unittest.TestCase):
     def test_r1_flags_literal_token_not_placeholder(self):
-        self.assertTrue(check_diff(diff("a.sh", '+curl -H "Authorization: Bearer abcdef0123456789abcdef"')))
-        self.assertTrue(check_diff(diff("a.md", "+MCP_TOKEN=abcdef012345")))
+        fake = "abcdef" + "0123456789abcdef"  # montado em runtime para o scanner não achar segredo no fonte
+        self.assertTrue(check_diff(diff("a.sh", '+curl -H "Authorization: Bearer ' + fake + '"')))
+        self.assertTrue(check_diff(diff("a.md", "+MCP_" + "TOKEN=" + fake)))
         self.assertFalse(check_diff(diff("a.md", "+MCP_TOKEN=<seu-token>")))
         self.assertFalse(check_diff(diff("a.sh", '+curl -H "Authorization: Bearer $MCP_TOKEN"')))
         self.assertFalse(check_diff(diff("a.py", '+API_KEY = os.environ["DEEPSEEK_API_KEY"]')))
