@@ -12,4 +12,8 @@ Formato: `- [status] id — descrição (modelo, tentativas, resultado)`. Status
 - [x] 1.1 — Subagents `planner` (opus), `reviewer` (haiku), `quick-decider` (haiku, effort low) em `.claude/agents/`
 - [x] 1.2 — Hook Stop `scripts/end-of-task.sh` (testes, linter, typecheck; 3 tentativas). Testado: sem tooling passa; com teste falhando bloqueia 2x e libera na 3ª
 - [ ] 1.3 — Teto de custo: valor pendente do usuário (o harness não mede custo sozinho)
-- [ ] 1.4 — Critério de pronto: uma tarefa real de plano a teste verde (este repo ainda não tem código/testes)
+- [x] 1.4 — Critério de pronto: tarefa real `harness/tasklog.py` (log por tarefa) planejada por agent Opus, implementada, 6 testes unittest verdes e hook `end-of-task.sh` verde (exit 0). Obs.: planner/reviewer/quick-decider ainda não carregados nesta sessão; usei agents comuns equivalentes
+
+## Fase 6 — Medição (antecipada como tarefa real da Fase 1)
+- [x] 6.1 — `harness/tasklog.py` + `tests/test_tasklog.py` (JSONL em `.claude/state/tasks.jsonl`, resumo por modelo)
+- [ ] 6.2 — Integrar ao hook: gravar tentativas/resultado automaticamente (hoje o registro é manual; tokens não são acessíveis ao hook)

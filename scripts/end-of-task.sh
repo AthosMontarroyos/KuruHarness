@@ -22,6 +22,7 @@ fi
 [ -f pyproject.toml ] && command -v pytest >/dev/null && run pytest pytest -q
 [ -f pyproject.toml ] && command -v ruff   >/dev/null && run ruff ruff check .
 [ -f pyproject.toml ] && command -v mypy   >/dev/null && run mypy mypy .
+[ -f tests/__init__.py ] && command -v python3 >/dev/null && run unittest python3 -m unittest discover -s tests -t . -q
 
 if [ $fail -eq 0 ]; then
   echo 0 > "$STATE/attempts"; exit 0
