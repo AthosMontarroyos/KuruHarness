@@ -11,7 +11,8 @@ Formato: `- [status] id — descrição (modelo, tentativas, resultado)`. Status
 ## Fase 1 — Núcleo mínimo
 - [x] 1.1 — Subagents `planner` (opus), `reviewer` (haiku), `quick-decider` (haiku, effort low) em `.claude/agents/`
 - [x] 1.2 — Hook Stop `scripts/end-of-task.sh` (testes, linter, typecheck; 3 tentativas). Testado: sem tooling passa; com teste falhando bloqueia 2x e libera na 3ª
-- [ ] 1.3 — Teto de custo: valor pendente do usuário (o harness não mede custo sozinho)
+- [x] 1.3 — Teto definido: US$ 5/mês por serviço (DeepSeek, Jev, Higgsfield). Registrado em SPEC/CLAUDE
+- [ ] 1.5 — Aplicar o teto de verdade: o Worker `kuru-subagents` precisa contar o gasto por mês (ex.: KV/D1) e recusar chamadas acima de US$ 5; hoje o limite é só regra escrita
 - [x] 1.4 — Critério de pronto: tarefa real `harness/tasklog.py` (log por tarefa) planejada por agent Opus, implementada, 6 testes unittest verdes e hook `end-of-task.sh` verde (exit 0). Obs.: planner/reviewer/quick-decider ainda não carregados nesta sessão; usei agents comuns equivalentes
 
 ## Fase 6 — Medição (antecipada como tarefa real da Fase 1)

@@ -16,7 +16,8 @@ Orquestrar sub-agents com custo controlado: planejar com modelo forte, revisar c
 
 ## Limites
 - Máximo 3 tentativas por tarefa.
-- Teto de custo por tarefa: **a definir pelo usuário** (valor ainda não informado).
+- Teto de custo mensal por serviço externo: DeepSeek US$ 5, Jev US$ 5, Higgsfield US$ 5. Ao atingir o teto, o serviço fica bloqueado até o mês seguinte e o trabalho cai para o Claude (ou espera).
+- Agentes em paralelo: de 3 a 5 (Cursor: no máximo 3, ver abaixo).
 - Cursor: no máximo 3 processos em paralelo; sessão nova a cada tarefa (bug do `--resume`).
 
 ## Regras verificáveis pelo revisor
@@ -25,3 +26,4 @@ Orquestrar sub-agents com custo controlado: planejar com modelo forte, revisar c
 3. O revisor nunca recebe o projeto inteiro, só diff + regras.
 4. Nenhuma fase é marcada concluída em `TASKS.md` sem o critério de pronto registrado.
 5. Máximo de 3 tentativas por tarefa respeitado.
+6. Chamadas a DeepSeek, Jev e Higgsfield passam pelo controle de teto mensal (US$ 5 cada).
