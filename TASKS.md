@@ -4,9 +4,12 @@ Formato: `- [status] id — descrição (modelo, tentativas, resultado)`. Status
 
 ## Fase 0 — Base
 - [x] 0.1 — `CLAUDE.md`, `SPEC.md`, `TASKS.md` criados
-- [!] 0.2 — MCP `kuru-subagents` responde a ping. Bloqueado: `ask_jev` e `ask_deepseek` retornam `404 error code: 1042` (o Worker `kuru-subagents` chama `kuru-ai` via `KURU_URL` por fetch público; Worker→Worker no mesmo account precisa de service binding)
-- [ ] 0.3 — Confirmar que o MCP exige token (testar chamada sem `MCP_TOKEN`)
+- [x] 0.2 — MCP lista as ferramentas e `ask_deepseek` respondeu `pong`. O erro 1042 inicial (fetch público Worker→Worker) foi corrigido por fora. `ask_jev` segue sem créditos (esperado; só entra na Fase 4)
+- [x] 0.3 — MCP exige token: `POST /mcp` sem credencial retorna 401
 - [ ] 0.4 — Instalar Cursor CLI (`agent`) e fazer login (interativo, na máquina do usuário)
 
 ## Fase 1 — Núcleo mínimo
-- Não iniciada (depende do critério de pronto da Fase 0)
+- [x] 1.1 — Subagents `planner` (opus), `reviewer` (haiku), `quick-decider` (haiku, effort low) em `.claude/agents/`
+- [x] 1.2 — Hook Stop `scripts/end-of-task.sh` (testes, linter, typecheck; 3 tentativas). Testado: sem tooling passa; com teste falhando bloqueia 2x e libera na 3ª
+- [ ] 1.3 — Teto de custo: valor pendente do usuário (o harness não mede custo sozinho)
+- [ ] 1.4 — Critério de pronto: uma tarefa real de plano a teste verde (este repo ainda não tem código/testes)
