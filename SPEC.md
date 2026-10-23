@@ -10,13 +10,13 @@ Orquestrar sub-agents com custo controlado: planejar com modelo forte, revisar c
 | 1 Núcleo | Subagents `planner` (Opus), `reviewer` (Haiku), `quick-decider` (Haiku, esforço baixo) em `.claude/agents/`; hook de fim de tarefa (testes, linter, typecheck); limites | Uma tarefa real vai de plano a teste verde |
 | 2 Conformidade | Checagens determinísticas → `reviewer` → escalada ao Opus só após 2 reprovações; revisor vê só diff + regras relevantes | Reprova de propósito um diff que viola este `SPEC.md` |
 | 3 Cursor | `agent -p --trust` em git worktree separado, modo Agent; diff volta ao Claude Code | Tarefa longa volta como diff revisado |
-| 4 Jev | Porteiro antes do revisor; baixa confiança escala ao Haiku | 50–100 diffs rotulados: acurácia aceitável nos casos de alta confiança |
+| 4 Jev | Julgador rápido de decisões no meio da tarefa (inclusive porteiro de diffs antes do revisor); baixa confiança escala ao Haiku | 50–100 casos rotulados: acurácia aceitável nos casos de alta confiança |
 | 5 DeepSeek | Reserva (limite do plano estourado ou tarefa não sensível) | Patch aplicado pelo Claude Code a partir do texto devolvido |
 | 6 Medição | Log por tarefa: modelo, tokens, resultado, tentativas | Regras de roteamento ajustadas com dados |
 
 ## Limites
 - Máximo 3 tentativas por tarefa.
-- Teto de custo mensal por serviço externo: DeepSeek US$ 5, Jev US$ 5, Higgsfield US$ 5. Ao atingir o teto, o serviço fica bloqueado até o mês seguinte e o trabalho cai para o Claude (ou espera).
+- Teto de custo mensal: DeepSeek US$ 5 (saldo real hoje, cuidado) e Higgsfield US$ 5. Jev sem teto: o usuário informa que não gera cobrança (AI Gateway recarregado com US$ 10). Ao atingir o teto, o serviço fica bloqueado até o mês seguinte e o trabalho cai para o Claude (ou espera).
 - Agentes em paralelo: de 3 a 5 (Cursor: no máximo 3, ver abaixo).
 - Cursor: no máximo 3 processos em paralelo; sessão nova a cada tarefa (bug do `--resume`).
 
@@ -26,4 +26,4 @@ Orquestrar sub-agents com custo controlado: planejar com modelo forte, revisar c
 3. O revisor nunca recebe o projeto inteiro, só diff + regras.
 4. Nenhuma fase é marcada concluída em `TASKS.md` sem o critério de pronto registrado.
 5. Máximo de 3 tentativas por tarefa respeitado.
-6. Chamadas a DeepSeek, Jev e Higgsfield passam pelo controle de teto mensal (US$ 5 cada).
+6. Chamadas a DeepSeek e Higgsfield respeitam o teto mensal (US$ 5 cada).
