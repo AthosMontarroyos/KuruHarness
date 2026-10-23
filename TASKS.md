@@ -18,3 +18,10 @@ Formato: `- [status] id — descrição (modelo, tentativas, resultado)`. Status
 ## Fase 6 — Medição (antecipada como tarefa real da Fase 1)
 - [x] 6.1 — `harness/tasklog.py` + `tests/test_tasklog.py` (JSONL em `.claude/state/tasks.jsonl`, resumo por modelo)
 - [ ] 6.2 — Integrar ao hook: gravar tentativas/resultado automaticamente (hoje o registro é manual; tokens não são acessíveis ao hook)
+
+## Fase 2 — Verificador de conformidade
+- [x] 2.1 — Critério de pronto: `reviewer` (Haiku) reprovou de propósito um diff com token literal e sem `model` (violando regras 1 e 2 do SPEC) e aprovou o diff corrigido
+
+## Fase 4 — Jev como porteiro
+- [x] 4.0 — `ask_jev` funcional (formato `state` + `questions` tipadas). Teste único: diff com token literal → `veredito=reprovar` (0.97), `segredo=0.96`; `sem_model` só 0.74 (pergunta de ausência é mais fraca)
+- [ ] 4.1 — Montar 50–100 diffs rotulados e comparar Jev × Haiku; entra só se a acurácia nos casos de alta confiança for aceitável
