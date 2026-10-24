@@ -21,6 +21,11 @@ ENV_NAMES = ("DEEPSEEK_API_KEY", "DEEP_SEEK_API_KEY", "DEEPSEEK_PROVIDER", "DEEP
              "HIGGSFIELD_API_KEY", "HIGGSFIELD_BASE_URL")
 
 
+def read(path):
+    with open(path, encoding="utf-8") as f:
+        return f.read()
+
+
 class Handler(BaseHTTPRequestHandler):
     log = []
     polls = 0
@@ -183,10 +188,10 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(code, 0, err)
         res = json.loads(out)
         self.assertEqual((res["git_apply_check"], res["diff"], res["provedor"]), ("ok", ".kuru/t.diff", "deepseek"))
-        diff = open(".kuru/t.diff").read()
+        diff = read(".kuru/t.diff")
         self.assertTrue(diff.startswith("--- a/a.txt") and diff.endswith("+ola harness\n"))
         self.assertNotIn("```", diff)
-        self.assertEqual(open("a.txt").read(), "ola mundo\n")  # só valida, nunca aplica
+        self.assertEqual(read("a.txt"), "ola mundo\n")  # só valida, nunca aplica
 
     def test_diff_out_exit_4_when_diff_does_not_apply_or_is_missing(self):
         self.repo_with("conteudo diferente\n")
@@ -205,7 +210,7 @@ class ApiTest(unittest.TestCase):
         code, out, _ = self.run_cli(llm.deepseek_main, ["--prompt", "oi", "--out", ".kuru/r.txt"],
                                     DEEPSEEK_API_KEY=DS, DEEPSEEK_BASE_URL=self.base + "/ok")
         self.assertEqual(code, 0)
-        self.assertEqual(open(".kuru/r.txt").read().strip(), "ola")
+        self.assertEqual(read(".kuru/r.txt").strip(), "ola")
         self.assertEqual(json.loads(out)["saida"], ".kuru/r.txt")
 
     def test_extract_diff_variants(self):
