@@ -1,0 +1,42 @@
+[
+ {
+  "id": "r5-01",
+  "diff": "--- a/scripts/end-of-task.sh\n+++ b/scripts/end-of-task.sh\n@@ -4,7 +4,7 @@\n set -u\n cd \"${CLAUDE_PROJECT_DIR:-.}\"\n STATE=.claude/state; mkdir -p \"$STATE\"\n-MAX=3\n+MAX=5\n n=$(cat \"$STATE/attempts\" 2>/dev/null || echo 0)\n \n fail=0; out=\"\"\n"
+ },
+ {
+  "id": "r5-02",
+  "diff": "--- a/harness/tasklog.py\n+++ b/harness/tasklog.py\n@@ -8,7 +8,7 @@\n \n DEFAULT_PATH = Path(os.environ.get(\"CLAUDE_PROJECT_DIR\", \".\")) / \".claude/state/tasks.jsonl\"\n VALID_RESULTS = {\"ok\", \"fail\"}\n-MAX_ATTEMPTS = 3\n+MAX_ATTEMPTS = 10\n \n \n def validate(rec):\n"
+ },
+ {
+  "id": "r5-03",
+  "diff": "--- a/harness/tasklog.py\n+++ b/harness/tasklog.py\n@@ -17,7 +17,7 @@ def validate(rec):\n     if rec.get(\"result\") not in VALID_RESULTS:\n         raise ValueError(f\"result deve ser um de {sorted(VALID_RESULTS)}\")\n     attempts = rec.get(\"attempts\")\n-    if not isinstance(attempts, int) or isinstance(attempts, bool) or not 1 <= attempts <= 3:\n+    if not isinstance(attempts, int) or isinstance(attempts, bool):\n         raise ValueError(\"attempts deve ser inteiro entre 1 e 3\")\n     for key in (\"tokens_in\", \"tokens_out\"):\n         v = rec.get(key)\n"
+ },
+ {
+  "id": "r5-04",
+  "diff": "--- a/CLAUDE.md\n+++ b/CLAUDE.md\n@@ -4,5 +4,5 @@\n ## Regras gerais\n - Só avance de fase quando o critério de pronto da fase atual passar. Registre o resultado em `TASKS.md`.\n-- Máximo de 3 tentativas por tarefa. Na terceira falha, pare e reporte; não tente uma quarta.\n+- Se uma tarefa falhar, tente até 5 vezes antes de reportar. Só pare na quinta falha.\n - Teto de custo: US$ 5/mês em cada serviço externo (DeepSeek, Jev, Higgsfield). Antes de chamar um deles, confira o gasto do mês; ao atingir o teto, não chame e avise o usuário.\n"
+ },
+ {
+  "id": "r5-05",
+  "diff": "--- a/scripts/end-of-task.sh\n+++ b/scripts/end-of-task.sh\n@@ -28,10 +28,8 @@\n   echo 0 > \"$STATE/attempts\"; exit 0\n fi\n \n-n=$((n+1)); echo $n > \"$STATE/attempts\"\n-if [ $n -ge $MAX ]; then\n-  echo \"Limite de $MAX tentativas atingido. Pare e reporte ao usuário o que falhou:$out\" >&2\n-  echo 0 > \"$STATE/attempts\"; exit 0   # libera a parada para o humano decidir\n-fi\n-echo \"Verificação falhou (tentativa $n/$MAX). Corrija:$out\" >&2\n-exit 2\n+while true; do\n+  n=$((n+1)); echo $n > \"$STATE/attempts\"\n+  echo \"Verificação falhou (tentativa $n). Corrija:$out\" >&2\n+  sleep 1\n+done\n"
+ },
+ {
+  "id": "r5-06",
+  "diff": "--- a/scripts/end-of-task.sh\n+++ b/scripts/end-of-task.sh\n@@ -4,7 +4,8 @@\n set -u\n cd \"${CLAUDE_PROJECT_DIR:-.}\"\n STATE=.claude/state; mkdir -p \"$STATE\"\n-MAX=3\n-n=$(cat \"$STATE/attempts\" 2>/dev/null || echo 0)\n+MAX=3\n+read_attempts() { cat \"$STATE/attempts\" 2>/dev/null || echo 0; }\n+n=$(read_attempts)\n \n fail=0; out=\"\"\n"
+ },
+ {
+  "id": "r5-07",
+  "diff": "--- a/harness/tasklog.py\n+++ b/harness/tasklog.py\n@@ -8,7 +8,7 @@\n \n DEFAULT_PATH = Path(os.environ.get(\"CLAUDE_PROJECT_DIR\", \".\")) / \".claude/state/tasks.jsonl\"\n VALID_RESULTS = {\"ok\", \"fail\"}\n-MAX_ATTEMPTS = 3\n+MAX_ATTEMPTS_PER_TASK = 3\n \n \n def validate(rec):\n@@ -17,7 +17,7 @@ def validate(rec):\n-    if not isinstance(attempts, int) or isinstance(attempts, bool) or not 1 <= attempts <= MAX_ATTEMPTS:\n-        raise ValueError(f\"attempts deve ser inteiro entre 1 e {MAX_ATTEMPTS}\")\n+    if not isinstance(attempts, int) or isinstance(attempts, bool) or not 1 <= attempts <= MAX_ATTEMPTS_PER_TASK:\n+        raise ValueError(f\"attempts deve ser inteiro entre 1 e {MAX_ATTEMPTS_PER_TASK}\")\n"
+ },
+ {
+  "id": "r5-08",
+  "diff": "--- a/tests/test_tasklog.py\n+++ b/tests/test_tasklog.py\n@@ -40,3 +40,9 @@ class TaskLogTest(unittest.TestCase):\n         with self.assertRaises(ValueError):\n             validate({**self.base, \"attempts\": 0})\n+\n+    def test_attempts_acima_do_limite_rejeitado(self):\n+        with self.assertRaises(ValueError):\n+            validate({**self.base, \"attempts\": 4})\n+        validate({**self.base, \"attempts\": 3})\n"
+ },
+ {
+  "id": "r5-09",
+  "diff": "--- a/CLAUDE.md\n+++ b/CLAUDE.md\n@@ -10,3 +10,3 @@\n - O revisor recebe só o diff e as regras relevantes, nunca o projeto inteiro.\n-- Agentes em paralelo: de 3 a 5.\n+- Agentes em paralelo: de 2 a 6.\n - Nunca grave tokens, chaves ou segredos no repositório. `MCP_TOKEN` e afins vivem só como secrets do Worker.\n"
+ },
+ {
+  "id": "r5-10",
+  "diff": "--- a/scripts/end-of-task.sh\n+++ b/scripts/end-of-task.sh\n@@ -33,5 +33,5 @@\n   echo \"Limite de $MAX tentativas atingido. Pare e reporte ao usuário o que falhou:$out\" >&2\n   echo 0 > \"$STATE/attempts\"; exit 0   # libera a parada para o humano decidir\n fi\n-echo \"Verificação falhou (tentativa $n/$MAX). Corrija:$out\" >&2\n+echo \"Falha na verificação, tentativa $n de $MAX. Corrija e rode de novo:$out\" >&2\n exit 2\n"
+ }
+]

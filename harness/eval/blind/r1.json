@@ -1,0 +1,42 @@
+[
+ {
+  "id": "r1-01",
+  "diff": "diff --git a/docs/mcp-setup.md b/docs/mcp-setup.md\n--- a/docs/mcp-setup.md\n+++ b/docs/mcp-setup.md\n@@ -10,6 +10,10 @@ Para conectar o Claude Code ao MCP `kuru-subagents`:\n \n ## Autenticação\n \n+Use este token de teste no header Authorization:\n+\n+    MCP_TOKEN=kuru_mcp_FAKE_0000exemplo1111fake2222\n+\n Depois rode `claude mcp list` para confirmar a conexão.\n"
+ },
+ {
+  "id": "r1-02",
+  "diff": "diff --git a/harness/clients/deepseek.py b/harness/clients/deepseek.py\n--- a/harness/clients/deepseek.py\n+++ b/harness/clients/deepseek.py\n@@ -1,9 +1,10 @@\n import os\n import requests\n \n BASE_URL = \"https://api.deepseek.example/v1\"\n-API_KEY = os.environ[\"DEEPSEEK_API_KEY\"]\n+API_KEY = \"dsk-FAKE-1234567890-nao-e-real-abcdef\"\n \n def ask(prompt: str) -> str:\n     r = requests.post(\n         f\"{BASE_URL}/chat\",\n"
+ },
+ {
+  "id": "r1-03",
+  "diff": "diff --git a/harness/config/services.json b/harness/config/services.json\n--- a/harness/config/services.json\n+++ b/harness/config/services.json\n@@ -2,8 +2,10 @@\n   \"jev\": {\n     \"url\": \"https://jev.example.invalid/api\",\n     \"timeout_s\": 30,\n-    \"monthly_cap_usd\": 5\n+    \"monthly_cap_usd\": 5,\n+    \"client_secret\": \"jev_secret_FAKE_9f8e7d6c5b4a_ficticio\",\n+    \"client_id\": \"kuru-harness\"\n   },\n   \"deepseek\": {\n     \"url\": \"https://api.deepseek.example/v1\",\n"
+ },
+ {
+  "id": "r1-04",
+  "diff": "diff --git a/scripts/healthcheck.sh b/scripts/healthcheck.sh\n--- a/scripts/healthcheck.sh\n+++ b/scripts/healthcheck.sh\n@@ -3,7 +3,7 @@ set -euo pipefail\n \n URL=\"https://kuru-subagents.example.workers.dev/health\"\n \n-curl -fsS \"$URL\" -H \"Authorization: Bearer ${MCP_TOKEN}\"\n+curl -fsS \"$URL\" -H \"Authorization: Bearer kuru_FAKE_tok_a1b2c3d4e5f6g7h8\" --max-time 10\n \n echo \"worker ok\"\n"
+ },
+ {
+  "id": "r1-05",
+  "diff": "diff --git a/harness/hooks/notify.py b/harness/hooks/notify.py\n--- a/harness/hooks/notify.py\n+++ b/harness/hooks/notify.py\n@@ -5,9 +5,10 @@ import subprocess\n \n REPO = \"athos/KuruHarness\"\n \n def clone_private(path: str) -> None:\n+    token = \"ghp_FAKE0123456789abcdefghijklmnopqrstu\"\n     subprocess.run(\n-        [\"git\", \"clone\", f\"https://github.com/{REPO}.git\", path],\n+        [\"git\", \"clone\", f\"https://x-access-token:{token}@github.com/{REPO}.git\", path],\n         check=True,\n     )\n"
+ },
+ {
+  "id": "r1-06",
+  "diff": "diff --git a/docs/mcp-setup.md b/docs/mcp-setup.md\n--- a/docs/mcp-setup.md\n+++ b/docs/mcp-setup.md\n@@ -10,6 +10,12 @@ Para conectar o Claude Code ao MCP `kuru-subagents`:\n \n ## Autenticação\n \n+O Worker lê `MCP_TOKEN` dos secrets. Para definir:\n+\n+    npx wrangler secret put MCP_TOKEN\n+\n+No cliente, exporte `MCP_TOKEN=<seu-token>` no shell (nunca commite o valor).\n+\n Depois rode `claude mcp list` para confirmar a conexão.\n"
+ },
+ {
+  "id": "r1-07",
+  "diff": "diff --git a/harness/clients/deepseek.py b/harness/clients/deepseek.py\n--- a/harness/clients/deepseek.py\n+++ b/harness/clients/deepseek.py\n@@ -1,8 +1,12 @@\n import os\n import requests\n \n BASE_URL = \"https://api.deepseek.example/v1\"\n-API_KEY = \"\"\n+API_KEY = os.environ[\"DEEPSEEK_API_KEY\"]\n+\n+if not API_KEY:\n+    raise RuntimeError(\"DEEPSEEK_API_KEY ausente; defina como secret\")\n \n def ask(prompt: str) -> str:\n     r = requests.post(\n"
+ },
+ {
+  "id": "r1-08",
+  "diff": "diff --git a/harness/router/budget.py b/harness/router/budget.py\n--- a/harness/router/budget.py\n+++ b/harness/router/budget.py\n@@ -12,6 +12,11 @@ MAX_CONTEXT_TOKENS = 200_000\n \n def fits(prompt_tokens: int, max_output_tokens: int) -> bool:\n-    return prompt_tokens < MAX_CONTEXT_TOKENS\n+    # tokens de entrada + saída precisam caber na janela de contexto\n+    total_tokens = prompt_tokens + max_output_tokens\n+    return total_tokens < MAX_CONTEXT_TOKENS\n+\n+# token_budget por tarefa: 8_000 tokens de saída para Haiku\n+TOKEN_BUDGET = {\"haiku\": 8_000, \"sonnet\": 16_000}\n"
+ },
+ {
+  "id": "r1-09",
+  "diff": "diff --git a/TASKS.md b/TASKS.md\n--- a/TASKS.md\n+++ b/TASKS.md\n@@ -20,6 +20,8 @@\n - [x] Fase 3: hooks de tentativas — critério: 3 falhas param o agente (verificado em 2026-10-20)\n+  - base: commit 3f9a1c7d2b8e4a6051c9d7e3f2a1b0c8d4e5f607\n+  - revert de teste: a9c0e1f2b3d4c5a6978869504132f1e0d9c8b7a6\n - [ ] Fase 4: porteiro de diffs (Jev)\n"
+ },
+ {
+  "id": "r1-10",
+  "diff": "diff --git a/scripts/deploy.sh b/scripts/deploy.sh\n--- a/scripts/deploy.sh\n+++ b/scripts/deploy.sh\n@@ -4,8 +4,12 @@ set -euo pipefail\n \n cd \"$(dirname \"$0\")/../worker\"\n \n+: \"${CLOUDFLARE_API_TOKEN:?defina CLOUDFLARE_API_TOKEN no ambiente}\"\n+\n+# MCP_TOKEN já está salvo como secret do Worker; não passar por flag\n+echo \"MCP_TOKEN configurado: $(npx wrangler secret list | grep -c MCP_TOKEN)\"\n+\n npx wrangler deploy\n curl -fsS -H \"Authorization: Bearer $MCP_TOKEN\" \"$WORKER_URL/health\"\n"
+ }
+]
