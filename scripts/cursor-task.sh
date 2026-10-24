@@ -23,6 +23,8 @@ id="${1:?uso: cursor-task.sh <task-id> <arquivo-prompt>}"
 prompt_file="$(realpath "${2:?uso: cursor-task.sh <task-id> <arquivo-prompt>}")"
 [[ "$id" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "task-id inválido (use letras, números, . _ -)" >&2; exit 2; }
 [ -s "$prompt_file" ] || { echo "arquivo de prompt vazio ou inexistente: $prompt_file" >&2; exit 2; }
+# O Cursor NÃO lê o CLAUDE.md: o prompt precisa carregar as regras do projeto por extenso (use `kuru brief`).
+grep -qF "# Regras do projeto (obrigatórias)" "$prompt_file" || { echo "o prompt não tem as regras do projeto: gere o briefing com 'bash bin/kuru brief --task ... --out <arquivo>'" >&2; exit 2; }
 command -v agent >/dev/null || { echo "Cursor CLI (agent) não encontrado no PATH" >&2; exit 127; }
 
 cd "${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel)}"

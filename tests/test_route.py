@@ -6,12 +6,14 @@ from harness import route
 class RouteTest(unittest.TestCase):
     def test_one_file_trivial(self):
         r = route.classify("renomear variável", ["a.py"])
-        self.assertEqual((r["tier"], r["agents"]), ("trivial", ["implementer-haiku"]))
+        self.assertEqual((r["tier"], r["acao"], r["agents"]), ("trivial", "direto", []))  # delegar custa mais que fazer
         self.assertFalse(r["incerta"])
 
     def test_few_files_media(self):
         r = route.classify("adicionar função de resumo", ["a.py", "b.py"])
-        self.assertEqual((r["tier"], r["agents"]), ("media", ["implementer-sonnet"]))
+        self.assertEqual((r["tier"], r["acao"], r["agents"]), ("media", "direto", []))
+        self.assertIn("6 arquivos", r["delegar_se"])
+        self.assertNotIn("delegar_se", route.classify("renomear variável", ["a.py"]))
 
     def test_many_files_or_architecture_is_complex(self):
         self.assertEqual(route.classify("ajustar", ["a", "b", "c", "d"])["tier"], "complexa")

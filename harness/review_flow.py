@@ -8,6 +8,7 @@ reprovações por tarefa respeita o limite de 3 tentativas (CLAUDE.md): na 3ª, 
 """
 import argparse
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -18,6 +19,7 @@ STATE = Path(".claude/state/reviews.json")
 MAX_ATTEMPTS = 3
 ESCALATE_AFTER = 2  # reprovações do Haiku antes de chamar o Opus
 STAGES = ("deterministic", "reviewer", "reviewer-senior")
+SMALL_DIFF_LINES = 20  # diff pequeno (1 arquivo, até N linhas) passa só pelas regras fixas: revisor de modelo custaria mais que o risco
 MAX_PACKET_CHARS = 12000  # o pacote vai INLINE no prompt do revisor: pacotes grandes são divididos
 
 
@@ -110,7 +112,14 @@ def total_rejections(entry):
     return sum(entry.get(s, 0) for s in STAGES)
 
 
-def check(task, diff, state_path=STATE, spec_path="SPEC.md"):
+def diff_size(diff):
+    """(arquivos, linhas alteradas) de um diff unificado."""
+    files = parse_diff(diff)
+    changed = sum(len(d["added"]) + len(d["removed"]) for d in files.values())
+    return len(files), changed
+
+
+def check(task, diff, state_path=STATE, spec_path="SPEC.md", force_model=False):
     data = _load(state_path)
     entry = data.setdefault(task, {})
     if total_rejections(entry) >= MAX_ATTEMPTS:
@@ -125,6 +134,14 @@ def check(task, diff, state_path=STATE, spec_path="SPEC.md"):
         if total_rejections(entry) >= MAX_ATTEMPTS:
             out["next"] = "PARAR"
         return out
+    limit = int(os.environ.get("KURU_SMALL_DIFF_LINES", SMALL_DIFF_LINES))
+    n_files, n_lines = diff_size(diff)
+    if not force_model and n_files <= 1 and n_lines <= limit:
+        data.pop(task, None)
+        _save(data, state_path)
+        return {"stage": "deterministic", "verdict": "APROVADO", "next": "FIM",
+                "motivo": f"diff pequeno ({n_files} arquivo, {n_lines} linhas): as regras fixas bastam, sem revisor de modelo. "
+                          "Use --model-review se quiser revisão independente mesmo assim."}
     pk = packets(diff, spec_path)
     return {"stage": "reviewer", "verdict": "PENDENTE", "agent": next_agent(entry),
             "packet": pk[0] if len(pk) == 1 else None, "packets": pk}
@@ -153,13 +170,14 @@ def main(argv=None):
     sub = p.add_subparsers(dest="cmd", required=True)
     c = sub.add_parser("check")
     c.add_argument("--task", required=True)
+    c.add_argument("--model-review", action="store_true", help="exige revisor de modelo mesmo para diff pequeno")
     r = sub.add_parser("record")
     r.add_argument("--task", required=True)
     r.add_argument("--stage", required=True)
     r.add_argument("--verdict", required=True)
     args = p.parse_args(argv)
     try:
-        out = check(args.task, sys.stdin.read()) if args.cmd == "check" else record(args.task, args.stage, args.verdict)
+        out = check(args.task, sys.stdin.read(), force_model=args.model_review) if args.cmd == "check" else record(args.task, args.stage, args.verdict)
     except ValueError as e:
         print(f"erro: {e}", file=sys.stderr)
         return 1

@@ -2,9 +2,12 @@
 
     python3 -m harness.route "renomear variável em utils.py" --files harness/utils.py
 
-Tiers: trivial -> implementer-haiku | media -> implementer-sonnet |
-       complexa -> planner (Opus) e depois implementer-sonnet |
-       longa -> cursor (Fase 3; sem Cursor cai em planner + sonnet).
+Delegar custa tokens (prompt do agente + briefing + resposta), então só vale quando poupa o contexto
+principal ou muda a qualidade. Por isso:
+  trivial  -> o próprio Claude faz, SEM agente
+  media    -> o próprio Claude faz, SEM agente (delegar só se for explorar muito: ver `delegar_se`)
+  complexa -> planner (Opus, contexto isolado) e depois a implementação
+  longa    -> Cursor com briefing autocontido (sem Cursor cai em planner + Sonnet).
 Risco alto sobe um tier (nunca abaixo de `media`). Quando o sinal é fraco, devolve
 `incerta=True`: aí vale perguntar ao quick-decider (Haiku) ou ao Jev. O Jev só pode SUBIR o tier,
 nunca baixar (a confiança dele não é calibrada, ver CLAUDE.md).
@@ -16,14 +19,15 @@ import sys
 
 TIERS = ("trivial", "media", "complexa", "longa")
 AGENTS = {
-    "trivial": ["implementer-haiku"],
-    "media": ["implementer-sonnet"],
+    "trivial": [],
+    "media": [],
     "complexa": ["planner", "implementer-sonnet"],
     "longa": ["cursor"],  # Fase 3; se indisponível: planner + implementer-sonnet
 }
+DELEGATE_IF = "a tarefa exigir ler ou explorar mais de 6 arquivos, ou logs/diffs grandes que poluiriam o contexto: use implementer-sonnet com briefing"
 FALLBACK_LONGA = ["planner", "implementer-sonnet"]
 # Cadeia de codificadores da tarefa longa: Cursor -> DeepSeek (só texto, tarefa não sensível) -> Sonnet.
-# O terceiro é Sonnet e não Haiku: só chegamos nele com tarefa grande, e o Haiku já cobre as triviais.
+# O terceiro é Sonnet e não Haiku: só chegamos nele com tarefa grande; a trivial nem usa agente.
 CHAIN_LONGA = ["cursor", "deepseek", "planner", "implementer-sonnet"]
 
 TRIVIAL_KW = re.compile(r"(?i)\b(typo|erro de digita[cç][aã]o|renomear|comentario|coment[aá]rio|texto|readme|docstring|formata[cç][aã]o|lint)\b")
@@ -61,7 +65,10 @@ def classify(description, files=None):
         reasons.append("risco alto: sobe um tier")
 
     tier = TIERS[score]
-    out = {"tier": tier, "agents": AGENTS[tier], "incerta": incerta, "risco": risk, "motivos": reasons}
+    out = {"tier": tier, "acao": "agente" if AGENTS[tier] else "direto", "agents": AGENTS[tier],
+           "incerta": incerta, "risco": risk, "motivos": reasons}
+    if tier == "media":
+        out["delegar_se"] = DELEGATE_IF
     if tier == "longa":
         # tarefa de risco alto não vai para o DeepSeek (dados sensíveis); pula direto para o Claude
         out["cadeia"] = [a for a in CHAIN_LONGA if not (risk and a == "deepseek")]
@@ -92,7 +99,11 @@ def apply_jev(result, jev_choice, min_prob=0.8):
         return result
     if TIERS.index(jev_choice["choice"]) > TIERS.index(result["tier"]):
         tier = jev_choice["choice"]
-        result = dict(result, tier=tier, agents=AGENTS[tier], motivos=result["motivos"] + [f"Jev sugeriu {tier}"])
+        result = dict(result, tier=tier, acao="agente" if AGENTS[tier] else "direto", agents=AGENTS[tier],
+                      motivos=result["motivos"] + [f"Jev sugeriu {tier}"])
+        result.pop("delegar_se", None)
+        if tier == "media":
+            result["delegar_se"] = DELEGATE_IF
     return result
 
 

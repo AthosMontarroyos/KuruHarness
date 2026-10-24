@@ -28,12 +28,39 @@ class LayoutTest(unittest.TestCase):
         self.assertIn("end-of-task.sh", cmd)
         self.assertTrue((ROOT / "scripts/end-of-task.sh").exists())
 
-    def test_commands_call_the_repo_launcher(self):
-        for f in list((ROOT / ".claude/commands").glob("*.md")) + list((ROOT / ".claude/agents").glob("*.md")):
+    def test_agents_and_skills_call_the_repo_launcher(self):
+        for f in list((ROOT / ".claude/skills").glob("*/SKILL.md")) + list((ROOT / ".claude/agents").glob("*.md")):
             text = f.read_text(encoding="utf-8")
             self.assertNotRegex(text, r"python3 -m harness", f.name)
             self.assertNotIn("kuru-harness", text, f.name)
             self.assertNotRegex(text, r"(?<!bin/)kuru (route|check-rules|review-flow|tasklog|cursor-task)\b", f.name)
+
+    # ---- autonomia e economia de tokens ----
+    def test_every_agent_runs_isolated_without_claude_md(self):
+        for a in (ROOT / ".claude/agents").glob("*.md"):
+            text = a.read_text(encoding="utf-8")
+            self.assertRegex(text, r"(?m)^omitClaudeMd:\s*true\s*$", a.name)
+            self.assertIn("SEM contexto", text, a.name)  # cada agente sabe que não vê a conversa
+
+    def test_every_agent_description_says_when_not_to_use_it_or_that_it_is_a_fallback(self):
+        for a in (ROOT / ".claude/agents").glob("*.md"):
+            desc = re.search(r"(?m)^description:\s*(.+)$", a.read_text(encoding="utf-8")).group(1)
+            self.assertRegex(desc, r"(?i)\b(n[aã]o use|n[aã]o serve|reserva|n[aã]o é)\b", a.name)
+
+    def test_claude_md_stays_small_because_it_is_loaded_every_turn(self):
+        size = len((ROOT / "CLAUDE.md").read_text(encoding="utf-8"))
+        self.assertLessEqual(size, 6000, f"CLAUDE.md com {size} caracteres: detalhe vai para skill/agent, não para cá")
+
+    def test_delegation_procedure_is_a_skill_the_model_can_pick_itself(self):
+        skill = (ROOT / ".claude/skills/delegar/SKILL.md").read_text(encoding="utf-8")
+        self.assertRegex(skill, r"(?m)^name:\s*delegar\s*$")
+        self.assertRegex(skill, r"(?m)^description:\s*.*[Nn]ão use para tarefa trivial")
+        self.assertNotIn("disable-model-invocation", skill)  # o Claude precisa poder acionar sozinho
+        self.assertIn("skill `delegar`", (ROOT / "CLAUDE.md").read_text(encoding="utf-8"))
+
+    def test_nothing_mentions_slash_commands_that_no_longer_exist(self):
+        for f in (ROOT / "CLAUDE.md", ROOT / "README.md", *(ROOT / ".claude/skills").glob("*/SKILL.md"), *(ROOT / ".claude/agents").glob("*.md")):
+            self.assertNotRegex(f.read_text(encoding="utf-8"), r"(?<![\w/])/(task|review|fallback)\b", f.name)
 
     def test_windows_safe_line_endings_configured(self):
         ga = (ROOT / ".gitattributes").read_text()
