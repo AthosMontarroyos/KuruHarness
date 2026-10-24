@@ -56,9 +56,12 @@ def merge_settings(settings, cmd, base):
         if rule not in allow:
             allow.append(rule)
     stop = settings.setdefault("hooks", {}).setdefault("Stop", [])
-    hook_cmd = f"KURU_RULES_MODE=diff bash {base}/scripts/end-of-task.sh"
-    if not any("end-of-task.sh" in h.get("command", "") for e in stop for h in e.get("hooks", [])):
-        stop.append({"hooks": [{"type": "command", "command": hook_cmd}]})
+    hook_cmd = f"bash {base}/scripts/end-of-task.sh --diff"
+    mine = [h for e in stop for h in e.get("hooks", []) if "end-of-task.sh" in h.get("command", "")]
+    for h in mine:  # reinstalar atualiza o comando em vez de duplicar
+        h.update(command=hook_cmd, shell="bash")
+    if not mine:
+        stop.append({"hooks": [{"type": "command", "command": hook_cmd, "shell": "bash"}]})
     return settings
 
 

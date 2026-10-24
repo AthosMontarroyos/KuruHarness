@@ -30,7 +30,8 @@ class InstallTest(unittest.TestCase):
         self.assertEqual(settings["model"], "opus")
         self.assertIn("Bash(ls*)", settings["permissions"]["allow"])
         hook = settings["hooks"]["Stop"][0]["hooks"][0]["command"]
-        self.assertIn("KURU_RULES_MODE=diff", hook)
+        self.assertIn("end-of-task.sh --diff", hook)
+        self.assertEqual(settings["hooks"]["Stop"][0]["hooks"][0]["shell"], "bash")
         md = (self.dest / "CLAUDE.md").read_text(encoding="utf-8")
         self.assertIn("regra minha", md)
         self.assertIn(install.BEGIN, md)

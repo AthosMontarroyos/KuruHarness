@@ -2,6 +2,7 @@
 # Hook Stop: roda testes, linter e typecheck do projeto, se configurados.
 # Reprova (exit 2) devolvendo o erro ao Claude. Máximo de 3 tentativas por tarefa.
 set -u
+[ "${1:-}" = "--diff" ] && export KURU_RULES_MODE=diff   # instalação global: sem depender de variável de ambiente no comando do hook
 # O kit é achado pela localização deste script (funciona em qualquer pasta do projeto e no Windows).
 KURU="$(cd "$(dirname "${BASH_SOURCE[0]}")/../bin" && pwd)/kuru"
 cd "${CLAUDE_PROJECT_DIR:-.}"
