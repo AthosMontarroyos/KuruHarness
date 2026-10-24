@@ -119,7 +119,7 @@ def check_tree(root="."):
             continue
         lines = list(enumerate(text.splitlines(), 1))
         out += check_r1_lines(f, lines)
-        if re.fullmatch(r"\.claude/agents/[^/]+\.md", f):
+        if re.fullmatch(r"(?:\.claude/)?agents/[^/]+\.md", f):
             out += check_r2_text(f, text)
         if f == "TASKS.md":
             out += check_r4_lines(f, lines)
@@ -165,7 +165,7 @@ def check_diff(text):
     out = []
     for path, d in parse_diff(text).items():
         out += check_r1_lines(path, d["added"])
-        if re.fullmatch(r"\.claude/agents/[^/]+\.md", path):
+        if re.fullmatch(r"(?:\.claude/)?agents/[^/]+\.md", path):
             # hunks que começam no frontmatter (arquivo novo ou edição no topo)
             for chunk in "\n".join(d["after"]).split("\x00"):
                 chunk = chunk.strip("\n")

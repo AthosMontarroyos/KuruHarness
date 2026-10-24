@@ -22,6 +22,9 @@ AGENTS = {
     "longa": ["cursor"],  # Fase 3; se indisponível: planner + implementer-sonnet
 }
 FALLBACK_LONGA = ["planner", "implementer-sonnet"]
+# Cadeia de codificadores da tarefa longa: Cursor -> DeepSeek (só texto, tarefa não sensível) -> Sonnet.
+# O terceiro é Sonnet e não Haiku: só chegamos nele com tarefa grande, e o Haiku já cobre as triviais.
+CHAIN_LONGA = ["cursor", "deepseek", "planner", "implementer-sonnet"]
 
 TRIVIAL_KW = re.compile(r"(?i)\b(typo|erro de digita[cç][aã]o|renomear|comentario|coment[aá]rio|texto|readme|docstring|formata[cç][aã]o|lint)\b")
 COMPLEX_KW = re.compile(r"(?i)\b(arquitetura|refator\w*|migra\w*|redesenh\w*|multi-?arquivo|m[oó]dulo novo|api p[uú]blica|esquema|schema)\b")
@@ -58,7 +61,11 @@ def classify(description, files=None):
         reasons.append("risco alto: sobe um tier")
 
     tier = TIERS[score]
-    return {"tier": tier, "agents": AGENTS[tier], "incerta": incerta, "risco": risk, "motivos": reasons}
+    out = {"tier": tier, "agents": AGENTS[tier], "incerta": incerta, "risco": risk, "motivos": reasons}
+    if tier == "longa":
+        # tarefa de risco alto não vai para o DeepSeek (dados sensíveis); pula direto para o Claude
+        out["cadeia"] = [a for a in CHAIN_LONGA if not (risk and a == "deepseek")]
+    return out
 
 
 def jev_questions(description):

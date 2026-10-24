@@ -1,0 +1,8 @@
+{
+  "name": "kuru-harness",
+  "version": "0.1.0",
+  "description": "Kit de subagents do Claude Code: roteamento por tamanho, revisão em 3 estágios, fallback do DeepSeek e Cursor em worktree",
+  "author": { "name": "Athos Montarroyos" },
+  "repository": "https://github.com/AthosMontarroyos/KuruHarness",
+  "license": "UNLICENSED"
+}

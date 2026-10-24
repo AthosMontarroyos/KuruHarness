@@ -2,6 +2,8 @@
 # Hook Stop: roda testes, linter e typecheck do projeto, se configurados.
 # Reprova (exit 2) devolvendo o erro ao Claude. Máximo de 3 tentativas por tarefa.
 set -u
+# O kit é achado pela localização deste script (funciona instalado como plugin ou clonado, e no Windows).
+KURU="$(cd "$(dirname "${BASH_SOURCE[0]}")/../bin" && pwd)/kuru"
 cd "${CLAUDE_PROJECT_DIR:-.}"
 # O Claude Code passa um JSON (session_id, transcript_path) no stdin; sem stdin, segue sem ele.
 HOOK_INPUT=""; if [ ! -t 0 ]; then HOOK_INPUT=$(timeout 2 cat 2>/dev/null || true); fi; export HOOK_INPUT
@@ -24,11 +26,11 @@ fi
 [ -f pyproject.toml ] && command -v pytest >/dev/null && run pytest pytest -q
 [ -f pyproject.toml ] && command -v ruff   >/dev/null && run ruff ruff check .
 [ -f pyproject.toml ] && command -v mypy   >/dev/null && run mypy mypy .
-[ -f tests/__init__.py ] && command -v python3 >/dev/null && run unittest python3 -m unittest discover -s tests -t . -q
-[ -f harness/check_rules.py ] && command -v python3 >/dev/null && run regras python3 -m harness.check_rules
+[ -f tests/__init__.py ] && run unittest bash "$KURU" unittest
+run regras bash "$KURU" check-rules
 
 log_task() { # resultado, tentativas -> .claude/state/tasks.jsonl (nunca derruba o hook)
-  [ -f harness/hooklog.py ] && command -v python3 >/dev/null && python3 -m harness.hooklog --result "$1" --attempts "$2" 2>/dev/null || true
+  bash "$KURU" hooklog --result "$1" --attempts "$2" 2>/dev/null || true
 }
 dirty=$(git status --porcelain -- . ':!.claude/state' 2>/dev/null | head -n 1)
 

@@ -3,6 +3,8 @@
 Harness de sub-agents do Claude Code. O plano completo e os critérios de pronto de cada fase estão em `SPEC.md`. O estado vivo das tarefas está em `TASKS.md`.
 
 ## Escopo
+O kit é distribuído como **plugin** do Claude Code (`.claude-plugin/`): `agents/`, `commands/`, `hooks/`, `bin/kuru` (launcher que acha o Python, também no Windows), `harness/` e `scripts/`. Os subagents ficam com o prefixo `kuru-harness:`.
+
 Este harness é do agente de código (Claude Code). O agente pessoal do usuário, e a futura migração dele para a Cloudflare, é outro projeto e está fora do escopo daqui. Por enquanto o DeepSeek segue como reserva usando o saldo que o usuário já tem lá, com o teto de US$ 5/mês aplicado pelo Worker.
 
 ## Regras gerais
@@ -15,7 +17,10 @@ Este harness é do agente de código (Claude Code). O agente pessoal do usuário
 - Commits coesos por intenção, em português, sem push forçado nem reescrita de histórico.
 
 ## Fluxo de revisão (Fase 2)
-Use `/review <task-id>`. Ordem fixa: 1) `harness/check_rules.py` (grátis, sem modelo); 2) `reviewer` (Haiku) recebendo só o pacote `regras relevantes + diff` gerado por `python3 -m harness.review_flow check`; 3) `reviewer-senior` (Opus) somente depois de 2 reprovações do Haiku na mesma tarefa. Toda reprovação (determinística ou de modelo) conta para o limite de 3 tentativas; na 3ª, parar e reportar. Estado em `.claude/state/reviews.json`. A regra 3 é imposta tecnicamente: os revisores têm `tools: []` e `omitClaudeMd: true` (não leem arquivos nem recebem este CLAUDE.md), e o pacote vai inline no prompt, em partes de até 12 mil caracteres divididas por arquivo.
+Use `/kuru-harness:review <task-id>`. Ordem fixa: 1) `kuru check-rules` (grátis, sem modelo); 2) `reviewer` (Haiku) recebendo só o pacote `regras relevantes + diff` gerado por `kuru review-flow check`; 3) `reviewer-senior` (Opus) somente depois de 2 reprovações do Haiku na mesma tarefa. Toda reprovação (determinística ou de modelo) conta para o limite de 3 tentativas; na 3ª, parar e reportar. Estado em `.claude/state/reviews.json`. A regra 3 é imposta tecnicamente: os revisores têm `tools: []` e `omitClaudeMd: true` (não leem arquivos nem recebem este CLAUDE.md), e o pacote vai inline no prompt, em partes de até 12 mil caracteres divididas por arquivo.
+
+## Cursor CLI (Fase 3)
+Coding longo vai para o Cursor: `kuru cursor-task` roda `agent -p --trust --force --model grok-4.7-high-fast` (modo agent é o padrão do CLI; `--mode` só aceita plan/ask) num git worktree por tarefa (sessão nova sempre, nunca `--resume`), no máximo 3 em paralelo, e devolve o diff para o `/kuru-harness:review` antes de aplicar. O modelo é fixo no script (`CURSOR_MODEL` para trocar) porque o padrão da conta é `auto`, não o Grok 4.7. Se o Cursor estiver indisponível (sem saldo, deslogado, CLI ausente), a tarefa longa desce a cadeia **Cursor → DeepSeek (só texto, tarefa sem risco alto) → Sonnet** (`planner` + `implementer-sonnet`), conforme o campo `cadeia` de `harness.route`. O texto do erro de "sem saldo" do Cursor não foi observado: qualquer falha do `cursor-task.sh` conta como indisponível. Confira os ids com `agent models`. Usar `CURSOR_API_KEY` não evita que o CLI grave a credencial em `~/.config/cursor`: em máquina compartilhada rode `agent logout` depois. `--force` libera comandos sem confirmação, por isso o `--sandbox enabled` por padrão e o worktree isolado.
 
 ## Roteamento inicial (proposta; ajustar com os logs da Fase 6)
 - Trivial (1 arquivo, baixo risco): Haiku.
