@@ -35,16 +35,25 @@ def _save(data, path=STATE):
 
 
 def spec_rules(spec_path="SPEC.md"):
-    """{numero: texto} da seção 'Regras verificáveis pelo revisor' do SPEC.md."""
-    text = Path(spec_path).read_text(encoding="utf-8")
-    sec = text.split("## Regras verificáveis pelo revisor", 1)[-1]
-    return {int(m.group(1)): m.group(2).strip() for m in re.finditer(r"^(\d+)\.\s+(.*)$", sec, re.M)}
+    """{numero: texto} da seção 'Regras verificáveis pelo revisor'.
+
+    Usa o SPEC.md do projeto se ele tiver a seção; senão cai no SPEC.md do próprio kit (plugin).
+    """
+    header = "## Regras verificáveis pelo revisor"
+    kit_spec = Path(__file__).resolve().parent.parent / "SPEC.md"
+    for candidate in (Path(spec_path), kit_spec):
+        if candidate.exists():
+            text = candidate.read_text(encoding="utf-8")
+            if header in text:
+                sec = text.split(header, 1)[-1]
+                return {int(m.group(1)): m.group(2).strip() for m in re.finditer(r"^(\d+)\.\s+(.*)$", sec, re.M)}
+    return {}
 
 
 def relevant_rule_numbers(paths):
     nums = {1, 3}  # segredos e "revisor só vê diff" valem sempre
     for p in paths:
-        if re.fullmatch(r"\.claude/agents/[^/]+\.md", p):
+        if re.fullmatch(r"(?:\.claude/)?agents/[^/]+\.md", p):
             nums.add(2)
         if p == "TASKS.md":
             nums.add(4)

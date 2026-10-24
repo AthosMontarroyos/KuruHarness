@@ -3,7 +3,7 @@ from pathlib import Path
 
 from harness.check_rules import _frontmatter
 
-AGENTS = Path(__file__).resolve().parent.parent / ".claude" / "agents"
+AGENTS = Path(__file__).resolve().parent.parent / "agents"
 
 
 class ReviewerIsolationTest(unittest.TestCase):

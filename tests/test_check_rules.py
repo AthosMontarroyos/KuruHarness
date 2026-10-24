@@ -33,6 +33,12 @@ class RulesTest(unittest.TestCase):
         self.assertTrue(check_r2_text("a.md", base.format("models: haiku\n")))
         self.assertTrue(check_r2_text("a.md", "---\nname: x\n---\nmodel: opus\n"))
 
+    def test_r2_applies_to_plugin_layout_agents_dir(self):
+        bad = "--- /dev/null\n+++ b/agents/x.md\n@@ -0,0 +1,4 @@\n+---\n+name: x\n+description: y\n+---\n"
+        self.assertTrue(check_diff(bad))
+        good = bad.replace("+description: y\n", "+description: y\n+model: haiku\n")
+        self.assertFalse(check_diff(good))
+
     def test_r4_requires_evidence(self):
         ok = [(1, "- [x] 1.1 — feito: `pytest -q` 14 passed (exit 0)")]
         self.assertEqual(check_r4_lines("TASKS.md", ok), [])

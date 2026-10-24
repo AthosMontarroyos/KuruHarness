@@ -1,27 +1,9 @@
 {
-  "hooks": {
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/end-of-task.sh"
-          }
-        ]
-      }
-    ]
-  },
   "permissions": {
     "allow": [
-      "Bash(python3 -m harness.route *)",
-      "Bash(python3 -m harness.check_rules*)",
-      "Bash(python3 -m harness.review_flow *)",
-      "Bash(python3 -m harness.tasklog *)",
-      "Bash(python3 -m unittest *)",
-      "Bash(bash scripts/end-of-task.sh*)",
+      "Bash(kuru *)",
       "Bash(git diff*)",
-      "Bash(git status*)",
-      "Bash(bash scripts/cursor-task.sh*)"
+      "Bash(git status*)"
     ]
   }
 }

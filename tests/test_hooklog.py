@@ -64,10 +64,12 @@ class HookScriptTest(unittest.TestCase):
         t = tempfile.TemporaryDirectory()
         self.addCleanup(t.cleanup)
         self.d = Path(t.name)
-        for sub in ("harness", "scripts", "tests"):
+        for sub in ("harness", "scripts", "bin", "tests"):
             (self.d / sub).mkdir()
-        for f in (".gitignore", "harness/__init__.py", "harness/tasklog.py", "harness/hooklog.py", "scripts/end-of-task.sh"):
+        for f in (".gitignore", "bin/kuru", "scripts/end-of-task.sh", *[f"harness/{n}.py" for n in
+                  ("__init__", "cli", "tasklog", "hooklog", "check_rules")]):
             (self.d / f).write_text((ROOT / f).read_text())
+        (self.d / "bin/kuru").chmod(0o755)
         (self.d / "tests/__init__.py").write_text("")
         self.test_file = self.d / "tests/test_x.py"
         self.set_test(True)

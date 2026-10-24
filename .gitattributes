@@ -1,2 +1,9 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# scripts e o launcher precisam de fim de linha LF mesmo no Windows (senão o shebang quebra)
+*.sh text eol=lf
+bin/* text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.json text eol=lf

@@ -7,7 +7,7 @@ Orquestrar sub-agents com custo controlado: planejar com modelo forte, revisar c
 | Fase | Escopo | Pronto quando |
 |---|---|---|
 | 0 Base | `CLAUDE.md`, `SPEC.md`, `TASKS.md`; Worker `kuru-subagents` como MCP exigindo token; Cursor CLI (`agent`) instalado e logado | Claude Code lista as ferramentas do MCP e responde a um "ping" |
-| 1 Núcleo | Subagents `planner` (Opus), `reviewer` (Haiku), `quick-decider` (Haiku, esforço baixo) em `.claude/agents/`; hook de fim de tarefa (testes, linter, typecheck); limites | Uma tarefa real vai de plano a teste verde |
+| 1 Núcleo | Subagents `planner` (Opus), `reviewer` (Haiku), `quick-decider` (Haiku, esforço baixo) em `agents/` (plugin); hook de fim de tarefa (testes, linter, typecheck); limites | Uma tarefa real vai de plano a teste verde |
 | 2 Conformidade | Checagens determinísticas → `reviewer` → escalada ao Opus só após 2 reprovações; revisor vê só diff + regras relevantes | Reprova de propósito um diff que viola este `SPEC.md` |
 | 3 Cursor | `agent -p --trust` em git worktree separado, modo Agent; diff volta ao Claude Code | Tarefa longa volta como diff revisado |
 | 4 Jev | Julgador rápido de decisões no meio da tarefa (inclusive porteiro de diffs antes do revisor); baixa confiança escala ao Haiku | 50–100 casos rotulados: acurácia aceitável nos casos de alta confiança |
