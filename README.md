@@ -17,6 +17,7 @@ Kit de subagents para o **Claude Code**. O Claude decide **sozinho** quando dele
 | `implementer-haiku` | Haiku | mesma mudança mecânica em muitos arquivos |
 | `reviewer` / `reviewer-senior` | Haiku / Opus | revisão de mudança não trivial (só diff + regras) |
 | `quick-decider` | Haiku | dúvida de uma frase |
+| `auditor` | Haiku 5.5 (1M nativo) | confere instruções do projeto contra o código e propõe o que mudar (só leitura) |
 | `deepseek-coder` | Haiku | reserva barata, só texto (chave de ambiente) |
 | `jev-judge` | Haiku | triagem de baixo risco por probabilidades (chave de ambiente) |
 | `creative` | Sonnet | imagem e vídeo pela Higgsfield (chave de ambiente, gasta crédito) |

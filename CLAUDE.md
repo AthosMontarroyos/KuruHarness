@@ -23,6 +23,7 @@ Delegar custa tokens (prompt do agente, briefing e resposta). Só compensa se po
 - a tarefa for complexa ou de arquitetura (multi-arquivo): `planner` antes de codar;
 - a tarefa for longa (8+ arquivos, reescrita): Cursor, com briefing (seção abaixo);
 - precisar de revisão independente de mudança NÃO trivial: `reviewer` (contexto limpo);
+- precisar checar se as instruções do projeto e o código ainda batem (lê muito, 1M de contexto): `auditor`, sob demanda ou antes de fechar fase, não a cada tarefa. Chame com só a raiz e o foco (nunca a conversa) e NÃO releia o que ele leu: ele devolve só o relatório (até 25 linhas), você aplica ou descarta as propostas;
 - for decisão fechada de baixo risco: `jev-judge`; imagem ou vídeo: `creative`; reserva barata de texto: `deepseek-coder`.
 Em dúvida sobre o tamanho: `bash bin/kuru route "<tarefa>" --files ...` (grátis, sem modelo).
 **Isolamento:** todo agente começa SEM contexto. Dê só um briefing autocontido (`bash bin/kuru brief ...`), nunca a conversa, e peça resposta curta (até 15 linhas). Cada agente já carrega o que precisa na própria definição.

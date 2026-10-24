@@ -17,6 +17,14 @@ class LayoutTest(unittest.TestCase):
         for a in agents:
             self.assertRegex(a.read_text(encoding="utf-8"), r"(?m)^model:\s*\S+", a.name)
 
+    def test_auditor_is_read_only_and_has_1m_context(self):
+        # o auditor lê muito: precisa de modelo com 1M nativo (Haiku 5.5, Sonnet 5+) e não pode editar nada
+        text = (ROOT / ".claude/agents/auditor.md").read_text(encoding="utf-8")
+        self.assertRegex(text, r"(?m)^model:\s*claude-haiku-5-5\s*$")
+        tools = re.search(r"(?m)^tools:\s*(.*)$", text).group(1)
+        for forbidden in ("Edit", "Write", "Bash", "NotebookEdit"):
+            self.assertNotIn(forbidden, tools)
+
     def test_plugin_packaging_is_gone(self):
         # o plugin foi removido de propósito (prefixos obrigatórios e o CLAUDE.md não carrega); não pode voltar sem decisão
         for p in (".claude-plugin", "hooks", "agents", "commands", "install.sh"):
