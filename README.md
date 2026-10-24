@@ -29,7 +29,7 @@ Kit de subagents para o **Claude Code**. O Claude decide **sozinho** quando dele
 | `JEV_API_KEY` | `jev-judge` | chave do Workers AI (o Jev estruturado só existe lá) |
 | `CLOUDFLARE_ACCOUNT_ID` | Workers AI | necessário quando alguma chave for do Workers AI |
 | `HIGGSFIELD_API_KEY` | `creative` | cada geração gasta crédito e só roda com aprovação do usuário |
-| `CURSOR_API_KEY` | `bin/kuru cursor-task` | opcional |
+| `CURSOR_API_KEY` | `bin/kuru cursor-task` | opcional: o Cursor usa o login do terminal (`agent login`); a chave só vale onde não dá para logar |
 
 Para trocar provedor ou modelo: `DEEPSEEK_PROVIDER`, `DEEPSEEK_BASE_URL`, `DEEPSEEK_MODEL`, `JEV_PROVIDER` (só `workers-ai`), `JEV_BASE_URL`, `JEV_MODEL`. Cursor (opcionais): `CURSOR_MODEL` (padrão `grok-4.7-high-fast`), `CURSOR_SANDBOX` (padrão `enabled`), `CURSOR_MAX_PARALLEL` (padrão 3). Para conferir sem gastar: `bash bin/kuru ask-deepseek --dry-run`, `bash bin/kuru ask-jev --dry-run`.
 
