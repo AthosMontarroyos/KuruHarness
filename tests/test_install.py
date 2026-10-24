@@ -84,6 +84,15 @@ class InstallTest(unittest.TestCase):
         self.assertEqual(out.returncode, 0, out.stderr)
         self.assertIn("Regras do projeto", (proj / ".kuru/x.prompt").read_text(encoding="utf-8"))
 
+    def test_manifest_records_the_clone_and_update_skill_is_installed(self):
+        install.install(self.dest)
+        manifest = json.loads((self.dest / "kuru/.manifest.json").read_text(encoding="utf-8"))
+        self.assertEqual(manifest["_origem"], ROOT.as_posix())
+        skill = (self.dest / "skills/atualizar-kuru/SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("_origem", skill)
+        self.assertIn("pull --ff-only", skill)
+        self.assertNotIn("--force`, ", skill.split("Com `conflitos`")[0])
+
     def test_reviewers_reject_input_without_a_diff(self):
         for name in ("reviewer", "reviewer-senior"):
             text = (ROOT / ".claude/agents" / f"{name}.md").read_text(encoding="utf-8")

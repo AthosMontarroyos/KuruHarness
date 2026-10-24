@@ -133,6 +133,7 @@ def install(dest, dry_run=False, force=False):
                 shutil.copy2(path, str(path) + ".kuru-bak")
             path.write_text(content, encoding="utf-8", newline="\n")
         manifest_path.parent.mkdir(parents=True, exist_ok=True)
+        new_manifest["_origem"] = ROOT.as_posix()  # onde atualizar: a skill atualizar-kuru lê daqui
         manifest_path.write_text(json.dumps(new_manifest, indent=2, sort_keys=True), encoding="utf-8")
     report["comando"] = cmd
     report["dry_run"] = dry_run
