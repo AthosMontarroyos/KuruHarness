@@ -19,8 +19,9 @@ if [ "${1:-}" = "--clean" ]; then
   exit 0
 fi
 
-id="${1:?uso: cursor-task.sh <task-id> <arquivo-prompt>}"
-prompt_file="$(realpath "${2:?uso: cursor-task.sh <task-id> <arquivo-prompt>}")"
+[ $# -ge 2 ] || { echo "uso: cursor-task.sh <task-id> <arquivo-prompt>" >&2; exit 2; }
+id="$1"
+prompt_file="$(realpath "$2")"
 [[ "$id" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "task-id inválido (use letras, números, . _ -)" >&2; exit 2; }
 [ -s "$prompt_file" ] || { echo "arquivo de prompt vazio ou inexistente: $prompt_file" >&2; exit 2; }
 # O Cursor NÃO lê o CLAUDE.md: o prompt precisa carregar as regras do projeto por extenso (use `kuru brief`).

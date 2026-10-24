@@ -41,6 +41,6 @@ Abra o Claude Code dentro do repositório. Para levar o kit a outro projeto, cop
 Requisitos: Python 3 (o `bin/kuru` testa `python3`, `python` e `py` e ignora o atalho quebrado da Microsoft Store no Windows) e Git; sem Python o `bin/kuru` sai com 127; comando desconhecido ou sem argumento sai com 2. No Windows, o Claude Code roda os comandos pelo Git Bash. Opcional: Cursor CLI (`agent`), com o modelo fixo em `grok-4.7-high-fast` (o padrão da conta é `auto`; confira com `agent models`).
 
 ## Mapa
-`.claude/agents/` e `.claude/skills/` (o kit), `.claude/settings.json` (hook e permissões), `harness/` e `bin/kuru` (roteador, briefing, revisão, regras, log, chamadas de API), `scripts/` (hook e runner do Cursor), `CLAUDE.md`/`SPEC.md`/`TASKS.md` (regras, especificação e ledger), `tests/` (`python -m unittest discover -s tests -t .`).
+`.claude/agents/` e `.claude/skills/` (o kit), `.claude/settings.json` (hook e permissões), `harness/` e `bin/kuru` (roteador, briefing, revisão, regras, log de tarefas `tasklog`, chamadas de API), `scripts/` (hook e runner do Cursor), `CLAUDE.md`/`SPEC.md`/`TASKS.md` (regras, especificação e ledger), `tests/` (`python -m unittest discover -s tests -t .`).
 
 Já foi plugin (PR #5) e saiu: exigia prefixo em tudo e não carregava o `CLAUDE.md`. Está no histórico do git.

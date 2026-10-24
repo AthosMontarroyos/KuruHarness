@@ -1,6 +1,6 @@
 """Roteamento de tarefas (regra inicial do CLAUDE.md), determinístico e testável.
 
-    python3 -m harness.route "renomear variável em utils.py" --files harness/utils.py
+    bash bin/kuru route "renomear variável em utils.py" --files harness/utils.py
 
 Delegar custa tokens (prompt do agente + briefing + resposta), então só vale quando poupa o contexto
 principal ou muda a qualidade. Por isso:

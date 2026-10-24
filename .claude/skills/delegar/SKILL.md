@@ -21,8 +21,8 @@ Peça sempre resposta curta (até 15 linhas): o que volta ao seu contexto també
 - **explorar muito** (`delegar_se`): `implementer-sonnet` com o briefing.
 - **mecânica repetida em muitos arquivos**: `implementer-haiku`.
 - **longa** (cadeia, descendo só quando o anterior estiver INDISPONÍVEL; reprovação ou teste falho não desce, conta como tentativa):
-  1. Cursor: `bash bin/kuru cursor-task <id> .kuru/<id>.prompt` (worktree isolado, `grok-4.7-high-fast`, no máximo 3 em paralelo). Saída 0: leia `.claude/state/cursor/<id>.diff`, valide com `git apply --check`, revise (passo 5) e só então `git apply`; depois `bash bin/kuru cursor-task --clean <id>`. Saída ≠ 0 (76 = provável falta de saldo ou limite, 75 = sem vaga, 127 = CLI ausente, 2 = argumento ou prompt inválido: sem regras, vazio ou worktree já existente) = Cursor indisponível: avise o usuário e desça. Qualquer outro código é falha do próprio `agent` e conta como tentativa, não desce.
-  2. `deepseek-coder` (só sem `risco`): ele chama a API com a chave do ambiente e devolve um diff validado. Falha de chave, saldo ou limite (códigos 2, 3, 76): desça.
+  1. Cursor: `bash bin/kuru cursor-task <id> .kuru/<id>.prompt` (worktree isolado, `grok-4.7-high-fast`, no máximo 3 em paralelo). Saída 0: leia `.claude/state/cursor/<id>.diff`, valide com `git apply --check`, revise (passo 5) e só então `git apply`; depois `bash bin/kuru cursor-task --clean <id>`. Saída ≠ 0 (76 = provável falta de saldo ou limite, 75 = sem vaga, 127 = CLI ausente, 2 = argumento ou prompt inválido: sem regras, vazio ou worktree já existente) = Cursor indisponível: avise o usuário e desça. Qualquer outro código é falha do próprio `agent` e conta como tentativa, não desce. Depois de qualquer falha, rode `bash bin/kuru cursor-task --clean <id>` antes de tentar de novo (worktree existente sai com 2).
+  2. `deepseek-coder` (só sem `risco`): ele chama a API com a chave do ambiente e devolve um diff validado. Falha de chave, saldo ou limite (códigos 2, 3, 76): desça. Código 4 (sem diff válido) conta como tentativa, não desce.
   3. `planner` e depois `implementer-sonnet`. Se o plano do Claude também estiver no limite, pare e reporte.
 
 ## 4. Verifique
@@ -32,7 +32,7 @@ Peça sempre resposta curta (até 15 linhas): o que volta ao seu contexto també
 Mudança trivial: o passo 4 basta. Senão: `git diff HEAD | bash bin/kuru review-flow check --task <id>` (inclua arquivos novos com `git add -N .`). Leia o JSON:
 - `verdict: APROVADO`: diff pequeno, as regras fixas bastam. Fim.
 - `verdict: PARAR`: pare e reporte as 3 tentativas.
-- `stage: deterministic` e `REPROVADO`: corrija as `violations` e repita. Nenhum modelo foi gasto.
+- `stage: deterministic` e `REPROVADO`: corrija as `violations` e repita. Nenhum modelo foi gasto. Se vier `next: PARAR` (3ª reprovação), pare e reporte.
 - `verdict: PENDENTE`: chame o agente indicado em `agent` (`reviewer` ou `reviewer-senior`) uma vez por item de `packets`, colando o pacote INLINE no prompt; nunca passe caminho de arquivo. O revisor reprova se qualquer pacote reprovar. Registre o veredito uma vez: `bash bin/kuru review-flow record --task <id> --stage <agent> --verdict APROVADO|REPROVADO`. `next: FIM` termina; `CORRIGIR` volta ao passo 3 (o `proximo_revisor` já considera a escalada ao Opus após 2 reprovações do Haiku); `PARAR` reporta.
 `--model-review` no `check` exige revisor de modelo mesmo para diff pequeno.
 

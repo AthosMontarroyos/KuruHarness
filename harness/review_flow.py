@@ -3,8 +3,8 @@
 O Opus só entra depois de 2 reprovações do Haiku na mesma tarefa. O total de
 reprovações por tarefa respeita o limite de 3 tentativas (CLAUDE.md): na 3ª, PARAR.
 
-    git diff | python3 -m harness.review_flow check  --task T1
-    python3 -m harness.review_flow record --task T1 --stage reviewer --verdict REPROVADO
+    git diff | bash bin/kuru review-flow check  --task T1
+    bash bin/kuru review-flow record --task T1 --stage reviewer --verdict REPROVADO
 """
 import argparse
 import json
@@ -39,7 +39,7 @@ def _save(data, path=STATE):
 def spec_rules(spec_path="SPEC.md"):
     """{numero: texto} da seção 'Regras verificáveis pelo revisor'.
 
-    Usa o SPEC.md do projeto se ele tiver a seção; senão cai no SPEC.md do próprio kit (plugin).
+    Usa o SPEC.md do projeto se ele tiver a seção; senão cai no SPEC.md do próprio kit.
     """
     header = "## Regras verificáveis pelo revisor"
     kit_spec = Path(__file__).resolve().parent.parent / "SPEC.md"

@@ -11,7 +11,7 @@ O kit mora em `.claude/` (agents e skills), `harness/`, `bin/kuru` (launcher que
 - Máximo de 3 tentativas por tarefa; na terceira falha, pare e reporte. Não tente uma quarta.
 - Chaves e tokens só em variável de ambiente, nunca em arquivo.
 - Commits coesos por intenção, em português, sem push forçado nem reescrita de histórico.
-- Teto de US$ 5/mês em DeepSeek e Higgsfield (chamada direta por API: o limite é o saldo pré-pago e a aprovação do usuário). Jev sem teto, mas sem loops.
+- Teto de US$ 5/mês em DeepSeek e Higgsfield. O kit NÃO soma gasto: o limite real é o saldo pré-pago na conta do provedor e a aprovação do usuário a cada geração. Jev sem teto, mas sem loops.
 - Agentes em paralelo: de 3 a 5 (Cursor: no máximo 3).
 
 ## Autonomia: quando delegar
@@ -42,5 +42,5 @@ Variáveis de ambiente: `DEEPSEEK_API_KEY` (DeepSeek, OpenRouter `sk-or-` ou Wor
 - Todo arquivo em `.claude/agents/` declara `model` no frontmatter.
 - Em `TASKS.md`, só marque `[x]` com o comando e o resultado na mesma linha.
 - O limite de 3 tentativas por tarefa não pode ser aumentado nem removido, em código, hook ou documentação.
-- Arquivos de trabalho temporários vão em `.kuru/` (ignorada pelo git), nunca em `.claude/`, que o Claude Code protege.
+- Arquivos de trabalho temporários (prompts, saídas) vão em `.kuru/` (ignorada pelo git), nunca em `.claude/`, que o Claude Code protege. `.claude/state/` e `.claude/worktrees/` são só dos scripts do kit.
 - Nunca grave chaves, tokens ou senhas em arquivo.
