@@ -47,7 +47,7 @@ git worktree add -q -b "cursor/$id" "$wt" HEAD
 
 log="$STATE/$id.log"; diff="$STATE/$id.diff"
 set +e
-( cd "$wt" && agent -p --trust --force --mode agent --sandbox "$SANDBOX" --model "$MODEL" \
+( cd "$wt" && agent -p --trust --force --sandbox "$SANDBOX" --model "$MODEL" \
     --output-format text "$(cat "$prompt_file")" ) > "$log" 2>&1
 rc=$?
 set -e

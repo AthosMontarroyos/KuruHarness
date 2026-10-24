@@ -53,8 +53,9 @@ class CursorTaskTest(unittest.TestCase):
     def test_agent_flags_model_fixed_and_fresh_session(self):
         self.run_script("t2", "prompt.txt")
         args = (self.d / "args").read_text()
-        for flag in ("-p", "--trust", "--mode agent", "--model grok-4.7-high-fast"):
+        for flag in ("-p", "--trust", "--force", "--model grok-4.7-high-fast"):
             self.assertIn(flag, args)
+        self.assertNotIn("--mode ", args)  # o CLI só aceita plan/ask; agent é o padrão
         self.assertNotIn("--resume", args)
         self.assertNotIn("--continue", args)
         self.assertIn("faça X", args)
