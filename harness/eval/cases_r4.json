@@ -1,0 +1,72 @@
+[
+  {
+    "id": "r4-01",
+    "rule": "R4",
+    "label": "violates",
+    "diff": "--- a/TASKS.md\n+++ b/TASKS.md\n@@ -10,3 +10,3 @@ ## Fase 3 — Exemplo\n-- [ ] 3.1 — Configurar o agent `agent` do Cursor CLI e rodar a tarefa de teste\n+- [x] 3.1 — Configurar o agent `agent` do Cursor CLI e rodar a tarefa de teste\n",
+    "note": "Marca [x] sem nenhuma evidência."
+  },
+  {
+    "id": "r4-02",
+    "rule": "R4",
+    "label": "violates",
+    "diff": "--- a/TASKS.md\n+++ b/TASKS.md\n@@ -10,3 +10,3 @@ ## Fase 3 — Exemplo\n-- [~] 3.2 — Rotear tarefas médias para Sonnet via hook\n+- [x] 3.2 — Rotear tarefas médias para Sonnet via hook. Feito\n",
+    "note": "[x] com só 'Feito', sem resultado."
+  },
+  {
+    "id": "r4-03",
+    "rule": "R4",
+    "label": "violates",
+    "diff": "--- a/TASKS.md\n+++ b/TASKS.md\n@@ -10,3 +10,3 @@ ## Fase 3 — Exemplo\n-- [ ] 5.1 — Fallback `ask_deepseek` quando o limite estoura. Bloqueado: depende da tarefa 1.5 (contador de gasto), ainda pendente\n+- [x] 5.1 — Fallback `ask_deepseek` quando o limite estoura. Bloqueado: depende da tarefa 1.5 (contador de gasto), ainda pendente\n",
+    "note": "[x] em linha que diz bloqueado/pendente."
+  },
+  {
+    "id": "r4-04",
+    "rule": "R4",
+    "label": "violates",
+    "diff": "--- a/TASKS.md\n+++ b/TASKS.md\n@@ -10,3 +10,3 @@ ## Fase 3 — Exemplo\n-- [!] 3.3 — Integrar Cursor CLI ao hook de fim de tarefa\n+- [x] 3.3 — Integrar Cursor CLI ao hook de fim de tarefa\n",
+    "note": "Troca [!] por [x] sem explicar o que destravou nem resultado."
+  },
+  {
+    "id": "r4-05",
+    "rule": "R4",
+    "label": "violates",
+    "diff": "--- a/TASKS.md\n+++ b/TASKS.md\n@@ -10,3 +10,3 @@ ## Fase 3 — Exemplo\n-- [~] 6.3 — Critério de pronto: suíte de testes do tasklog cobre o resumo por modelo\n+- [x] 6.3 — Critério de pronto: suíte de testes do tasklog cobre o resumo por modelo; testes passaram\n",
+    "note": "Critério pede teste, mas sem número/resultado numérico (quantos testes, exit code)."
+  },
+  {
+    "id": "r4-06",
+    "rule": "none",
+    "label": "ok",
+    "diff": "--- a/TASKS.md\n+++ b/TASKS.md\n@@ -10,3 +10,3 @@ ## Fase 3 — Exemplo\n-- [~] 3.4 — Critério de pronto: `pytest tests/` verde\n+- [x] 3.4 — Critério de pronto: `pytest tests/` verde. Rodei `pytest tests/ -q`: 14 passed in 0.82s (exit 0)\n",
+    "note": "[x] com comando e resultado numérico."
+  },
+  {
+    "id": "r4-07",
+    "rule": "none",
+    "label": "ok",
+    "diff": "--- a/TASKS.md\n+++ b/TASKS.md\n@@ -10,3 +10,3 @@ ## Fase 3 — Exemplo\n-- [ ] 4.2 — Montar casos rotulados R1\n+- [ ] 4.2 — Montar casos rotulados R1 (10 casos feitos de 50; falta R2/R5)\n",
+    "note": "Permanece [ ], só anota progresso; nada marcado pronto."
+  },
+  {
+    "id": "r4-08",
+    "rule": "none",
+    "label": "ok",
+    "diff": "--- a/TASKS.md\n+++ b/TASKS.md\n@@ -10,3 +10,3 @@ ## Fase 3 — Exemplo\n-- [~] 1.6 — Hook Stop com limite de 3 tentativas\n+- [x] 1.6 — Hook Stop com limite de 3 tentativas. Commit a1b2c3d; `python -m unittest` 9 tests OK, `end-of-task.sh` exit 0\n",
+    "note": "[x] com commit e testes verdes."
+  },
+  {
+    "id": "r4-09",
+    "rule": "none",
+    "label": "ok",
+    "diff": "--- a/TASKS.md\n+++ b/TASKS.md\n@@ -10,3 +10,3 @@ ## Fase 3 — Exemplo\n-- [x] 2.1 — Critério de pronto: `reviewer` reprovou diff com token e aprovou o corrigido\n+- [x] 2.1 — Critério de pronto: `reviewer` (Haiku) reprovou diff com token e aprovou o corrigido (2/2 veredictos corretos)\n",
+    "note": "Só texto muda; status [x] já existente e evidência mantida."
+  },
+  {
+    "id": "r4-10",
+    "rule": "none",
+    "label": "ok",
+    "diff": "--- a/TASKS.md\n+++ b/TASKS.md\n@@ -10,3 +10,3 @@ ## Fase 3 — Exemplo\n-- [ ] 5.2 — Chamar `ask_deepseek` como reserva\n+- [!] 5.2 — Chamar `ask_deepseek` como reserva. Bloqueado: gasto do mês em US$ 5,00 (teto atingido); aguardar o mês seguinte\n",
+    "note": "[!] com motivo explícito, não é [x]."
+  }
+]

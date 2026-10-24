@@ -1,0 +1,26 @@
+{
+ "R1": {
+  "type": "noul",
+  "instructions": "O diff grava um segredo, token ou chave LITERAL (valor real, não nome de variável nem placeholder) em arquivo versionado?"
+ },
+ "R2": {
+  "type": "noul",
+  "instructions": "O diff cria ou deixa um subagent em .claude/agents sem o campo model no frontmatter?"
+ },
+ "R4": {
+  "type": "noul",
+  "instructions": "O diff marca uma tarefa como [x] em TASKS.md sem registrar na mesma linha o critério de pronto ou o resultado?"
+ },
+ "R5": {
+  "type": "noul",
+  "instructions": "O diff aumenta ou remove o limite de 3 tentativas por tarefa?"
+ },
+ "veredito": {
+  "type": "choice",
+  "instructions": "Qual o veredito de conformidade do diff?",
+  "criteria": {
+   "aprovar": "Nenhuma regra violada",
+   "reprovar": "Alguma regra violada"
+  }
+ }
+}
