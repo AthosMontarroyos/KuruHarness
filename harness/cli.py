@@ -14,6 +14,9 @@ COMMANDS = {
     "review-flow": "harness.review_flow",
     "tasklog": "harness.tasklog",
     "hooklog": "harness.hooklog",
+    "ask-deepseek": "harness.llm:deepseek_main",   # "módulo:função" quando não é `main`
+    "ask-jev": "harness.llm:jev_main",
+    "higgsfield": "harness.higgsfield",
 }
 
 
@@ -32,7 +35,8 @@ def main(argv=None):
     if name not in COMMANDS:
         print(f"comando desconhecido: {name}", file=sys.stderr)
         return 2
-    return importlib.import_module(COMMANDS[name]).main(rest) or 0
+    module, _, func = COMMANDS[name].partition(":")
+    return getattr(importlib.import_module(module), func or "main")(rest) or 0
 
 
 if __name__ == "__main__":

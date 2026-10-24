@@ -10,7 +10,7 @@ Este harness é do agente de código (Claude Code). O agente pessoal do usuário
 ## Regras gerais
 - Só avance de fase quando o critério de pronto da fase atual passar. Registre o resultado em `TASKS.md`.
 - Máximo de 3 tentativas por tarefa. Na terceira falha, pare e reporte; não tente uma quarta.
-- Teto de custo: US$ 5/mês em DeepSeek (saldo real de US$ 5, cuidado) e em Higgsfield. O Worker bloqueia o DeepSeek sozinho ao chegar a US$ 5 estimados (ferramenta `budget_status` mostra o gasto; é estimativa, o saldo real está no painel do DeepSeek). Higgsfield ainda sem bloqueio automático: confira o gasto antes de chamar e avise o usuário ao se aproximar do teto. Jev não tem teto (usuário informa que não cobra); ainda assim, evite chamadas em loop.
+- Teto de custo: US$ 5/mês em DeepSeek e em Higgsfield. As chamadas diretas por API (agentes `deepseek-coder` e `creative`) **não passam pelo contador do Worker**: o limite do DeepSeek é o saldo pré-pago do provedor, e o do Higgsfield é a regra de só gerar com a aprovação do usuário (`--yes`). Jev não tem teto (usuário informa que não cobra); ainda assim, evite chamadas em loop.
 - Agentes em paralelo: de 3 a 5.
 - O revisor recebe só o diff e as regras relevantes, nunca o projeto inteiro.
 - Nunca grave tokens, chaves ou segredos no repositório. `MCP_TOKEN` e afins vivem só como secrets do Worker.
@@ -27,7 +27,10 @@ Coding longo vai para o Cursor: `bash bin/kuru cursor-task` roda `agent -p --tru
 - Média: Sonnet.
 - Multi-arquivo ou arquitetura: `planner` (Opus). Fable só se o Opus falhar duas vezes.
 
-## Ferramentas externas (MCP `kuru-subagents`)
-- `ask_jev`: julgador rápido, sem raciocínio: lê o estado e devolve probabilidades por opção. Serve para acelerar decisões no meio da tarefa (rotear, aprovar/reprovar, urgente ou não), inclusive como porteiro de diffs (Fase 4). Quem raciocina é o Haiku/Claude; use o Jev quando a decisão cabe em opções fechadas. Sempre escreva as regras/critérios no texto da pergunta (sem isso ele aprova quase tudo). Medido na Fase 4: 87,5% de acerto contra 97,5% do Haiku, e a confiança dele NÃO é calibrada (errou com 0,98). O próprio criador do Jev avisa que ele não foi feito para nunca alucinar: trate a saída como indício probabilístico, nunca como prova, e nunca deixe uma ação irreversível depender só dele. Por isso não use o Jev como porteiro de conformidade de diffs; use em roteamento e triagem de baixo risco. Entrada: `state` (string com o diff) e `questions` (objeto; cada pergunta é `{type, instructions, criteria?}` com `type` = `noul` (sim/não, devolve probabilidade), `choice` (criteria = objeto opção→descrição) ou `score` (criteria = lista ordenada)). Uma pergunta que seja string solta dá erro 502/7003. Saída: `{state:"Completed", result:{answers:{...}, usage}}`. Ele só julga, não explica nem pensa; baixa confiança (`confidence` baixa ou probabilidades próximas) escala para o Haiku.
-- `ask_deepseek`: reserva para tarefas não sensíveis ou limite estourado (Fase 5). Só devolve texto; o Claude Code aplica o patch.
-- `higgsfield_*`: criatividade, fora deste plano.
+## Provedores e chaves (sem MCP, sem plugin, sem comandos)
+Os agentes chamam as APIs direto, com chaves lidas de **variáveis de ambiente** (nunca em arquivo, nunca coladas no chat). No Claude Code na nuvem, ficam nas configurações do ambiente.
+- **`deepseek-coder`** usa `DEEPSEEK_API_KEY` (alias `DEEP_SEEK_API_KEY`). A chave pode ser do DeepSeek, do OpenRouter (`sk-or-...`) ou do Workers AI (exige também `CLOUDFLARE_ACCOUNT_ID`); o provedor é detectado pelo formato e dá para forçar com `DEEPSEEK_PROVIDER`, `DEEPSEEK_BASE_URL` e `DEEPSEEK_MODEL`. Só devolve texto: o Claude Code aplica o diff depois do `/review`. Teste: `bash bin/kuru ask-deepseek --dry-run`.
+- **`jev-judge`** usa `JEV_API_KEY` + `CLOUDFLARE_ACCOUNT_ID`. O Jev estruturado (`typesafe/jev`) só existe no Workers AI; o OpenRouter só tem o Jev Router (chat) e não serve. O `kuru ask-jev` valida o formato antes de chamar (`--example` mostra um válido). Medido: 87,5% de acerto contra 97,5% do Haiku, e a confiança NÃO é calibrada (errou com 0,98): é indício, nunca prova, e não serve de porteiro de diffs; use em triagem de baixo risco.
+- **`creative`** usa `HIGGSFIELD_API_KEY`. Cada geração gasta crédito: `bash bin/kuru higgsfield run` só envia com `--yes`, e o agente só passa `--yes` com a aprovação explícita do usuário.
+- Na nuvem, a rede do ambiente precisa liberar `api.deepseek.com`, `openrouter.ai`, `api.cloudflare.com` e `api.higgsfield.ai`.
+- O servidor MCP `kuru-subagents` (Worker) continua existindo, mas nada aqui depende dele.
