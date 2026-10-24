@@ -1,3 +1,4 @@
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -14,8 +15,9 @@ class FlowTest(unittest.TestCase):
         self.addCleanup(t.cleanup)
         self.state = Path(t.name) / "reviews.json"
 
-    def check(self, diff, task="t"):
-        return rf.check(task, diff, state_path=self.state)
+    def check(self, diff, task="t", force_model=True):
+        # os testes do fluxo de 3 estágios forçam o revisor de modelo (os diffs de exemplo são pequenos)
+        return rf.check(task, diff, state_path=self.state, force_model=force_model)
 
     def test_deterministic_rejects_without_model(self):
         out = self.check(BAD)
@@ -37,6 +39,29 @@ class FlowTest(unittest.TestCase):
         out = rf.record("t", "reviewer", "REPROVADO", self.state)
         self.assertEqual(out["proximo_revisor"], "reviewer-senior")
         self.assertEqual(self.check(GOOD)["agent"], "reviewer-senior")
+
+    def test_small_diff_skips_the_model_reviewer(self):
+        out = self.check(GOOD, force_model=False)
+        self.assertEqual((out["stage"], out["verdict"], out["next"]), ("deterministic", "APROVADO", "FIM"))
+        self.assertNotIn("agent", out)
+        self.assertIn("sem revisor de modelo", out["motivo"])
+        self.assertEqual(self.check(GOOD, force_model=True)["agent"], "reviewer")  # --model-review exige
+
+    def test_small_diff_still_fails_on_deterministic_rules(self):
+        out = self.check(BAD, force_model=False)
+        self.assertEqual((out["stage"], out["verdict"]), ("deterministic", "REPROVADO"))
+
+    def test_big_or_multi_file_diff_still_goes_to_the_model(self):
+        big = "--- a/a.md\n+++ b/a.md\n@@ -1,0 +1,30 @@\n" + "".join(f"+linha {i}\n" for i in range(30))
+        self.assertEqual(self.check(big, force_model=False)["verdict"], "PENDENTE")
+        two = ("--- a/a.md\n+++ b/a.md\n@@ -1,0 +1,1 @@\n+x\n--- a/b.md\n+++ b/b.md\n@@ -1,0 +1,1 @@\n+y\n")
+        self.assertEqual(self.check(two, force_model=False)["verdict"], "PENDENTE")
+        self.assertEqual(rf.diff_size(two), (2, 2))
+
+    def test_small_diff_approval_resets_the_task_counter(self):
+        rf.record("t", "reviewer", "REPROVADO", self.state)
+        self.check(GOOD, force_model=False)
+        self.assertNotIn("t", json.loads(self.state.read_text()))
 
     def test_small_diff_is_one_packet(self):
         out = self.check(GOOD)

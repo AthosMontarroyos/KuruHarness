@@ -1,46 +1,46 @@
 # KuruHarness
 
-Kit de subagents para o **Claude Code**, distribuído como plugin. Roteia cada tarefa pelo tamanho, implementa com o modelo certo, revisa o diff em 3 estágios e registra o resultado.
+Kit de subagents para o **Claude Code**. O Claude decide **sozinho** quando delegar: não há comando para digitar. A política está no `CLAUDE.md` (curta, carregada a cada turno) e o procedimento detalhado na skill `delegar` (o Claude a aciona quando precisa).
 
-## Instalação
+## Como funciona
+- **Trivial, o Claude faz direto.** Delegar custa tokens (prompt do agente, briefing e resposta); só compensa quando poupa o contexto principal ou melhora a qualidade.
+- **Delega quando vale:** explorar muito (`implementer-sonnet`), tarefa complexa (`planner` primeiro), tarefa longa (Cursor), mudança mecânica em lote (`implementer-haiku`), revisão independente de mudança não trivial (`reviewer`, depois `reviewer-senior` só após 2 reprovações).
+- **Isolamento:** todo agente começa sem contexto e recebe só um briefing autocontido (`bash bin/kuru brief`), nunca a conversa. Cada um roda com `omitClaudeMd` e carrega o que precisa na própria definição.
+- **Cursor:** não lê o `CLAUDE.md`, então o briefing leva as regras do projeto por extenso e `bin/kuru cursor-task` recusa um prompt sem elas.
+- **Revisão:** diff pequeno (1 arquivo, até 20 linhas alteradas, somando `+` e `-`) passa só pelas regras fixas, sem gastar modelo.
 
-Passos para instalar o kit no Claude Code, pensados para o Claude executar a pedido do usuário (ou para o usuário rodar à mão). Sem clonar o repositório:
+## Agentes
+| Agente | Modelo | Quando |
+|---|---|---|
+| `planner` | Opus | tarefa complexa, antes de codar |
+| `implementer-sonnet` | Sonnet | exploração grande que encheria o contexto |
+| `implementer-haiku` | Haiku | mesma mudança mecânica em muitos arquivos |
+| `reviewer` / `reviewer-senior` | Haiku / Opus | revisão de mudança não trivial (só diff + regras) |
+| `quick-decider` | Haiku | dúvida de uma frase |
+| `auditor` | Haiku 5.5 (1M nativo) | confere instruções do projeto contra o código e propõe o que mudar (só leitura) |
+| `deepseek-coder` | Haiku | reserva barata, só texto (chave de ambiente) |
+| `jev-judge` | Haiku | triagem de baixo risco por probabilidades (chave de ambiente) |
+| `creative` | Sonnet | imagem e vídeo pela Higgsfield (chave de ambiente, gasta crédito) |
 
-1. **Confira o ambiente**: `claude --version` (precisa de 2.1.292 ou mais novo), `python3 --version` (ou `python`, ou `py`; qualquer Python 3) e `git --version`.
-2. **Instale o plugin** pelo shell:
-   ```
-   claude plugin install kuru-harness --marketplace AthosMontarroyos/KuruHarness
-   ```
-   Se o `claude` for mais antigo que 2.1.292 (e tiver pelo menos 2.1.275): `claude plugin marketplace add AthosMontarroyos/KuruHarness` e depois `claude plugin install kuru-harness@kuru`.
-3. **Confirme**: `claude plugin details kuru-harness` deve listar **6 Agents, 3 Skills e 1 Hook** (os 3 comandos aparecem como Skills no `details`). Se listar menos, pare e mostre a saída ao usuário.
-4. **Avise o usuário** que ele precisa rodar `/reload-plugins` (ou reiniciar a sessão) e que os comandos novos são:
-   - `/kuru-harness:task <id> <descrição>`: roteia, implementa, verifica e revisa uma tarefa;
-   - `/kuru-harness:review <id>`: revisa o diff atual (regras fixas, depois Haiku, depois Opus só após 2 reprovações);
-   - `/kuru-harness:fallback <id> <descrição>`: faz uma tarefa não sensível pelo DeepSeek.
-5. **Teste rápido** (opcional): `kuru route "corrigir typo" --files a.md` deve devolver `{"tier": "trivial", ...}`.
+## Chaves (variáveis de ambiente)
+| Variável | Para quê | Observação |
+|---|---|---|
+| `DEEPSEEK_API_KEY` (ou `DEEP_SEEK_API_KEY`) | `deepseek-coder` | chave do DeepSeek, do OpenRouter (`sk-or-...`) ou do Workers AI; o provedor é detectado pelo formato |
+| `JEV_API_KEY` | `jev-judge` | chave do Workers AI (o Jev estruturado só existe lá) |
+| `CLOUDFLARE_ACCOUNT_ID` | Workers AI | necessário quando alguma chave for do Workers AI |
+| `HIGGSFIELD_API_KEY` | `creative` | cada geração gasta crédito e só roda com aprovação do usuário |
+| `CURSOR_API_KEY` | `bin/kuru cursor-task` | opcional |
 
-### Cuidados
-- A instalação não precisa clonar este repositório, copiar arquivos dele para o projeto nem rodar scripts baixados.
-- Chaves, tokens e senhas não vão para arquivo nenhum. Para usar o Cursor, a chave vai só na variável de ambiente `CURSOR_API_KEY`; `agent login` só se o usuário pedir.
-- O `CLAUDE.md`, o `settings.json` e as permissões do usuário só mudam com o "sim" dele. Duas sugestões para oferecer:
-  - Regras de permissão, porque um plugin não consegue trazê-las e, sem elas, cada passo do `/kuru-harness:task` pede aprovação. Acrescentar a `~/.claude/settings.json`:
-    ```json
-    { "permissions": { "allow": [ "Bash(kuru *)", "Bash(git diff*)", "Bash(git status*)", "Bash(git apply*)", "Bash(git add -N*)" ] } }
-    ```
-  - Atualização automática: marketplaces de terceiros vêm com ela desligada. Ligar em `/plugin` → aba Marketplaces → `kuru` → Enable auto-update. Sem isso, atualizar com `claude plugin update kuru-harness@kuru`.
+Para trocar provedor ou modelo: `DEEPSEEK_PROVIDER`, `DEEPSEEK_BASE_URL`, `DEEPSEEK_MODEL`, `JEV_PROVIDER` (só `workers-ai`), `JEV_BASE_URL`, `JEV_MODEL`. Cursor (opcionais): `CURSOR_MODEL` (padrão `grok-4.7-high-fast`), `CURSOR_SANDBOX` (padrão `enabled`), `CURSOR_MAX_PARALLEL` (padrão 3). Para conferir sem gastar: `bash bin/kuru ask-deepseek --dry-run`, `bash bin/kuru ask-jev --dry-run`.
 
-### Se algo falhar
-- **Windows**: o Claude Code roda os comandos com o Git Bash. O `kuru` procura `python3`, `python` e `py` e testa cada um, ignorando o `python3` da Microsoft Store (que não roda nada). Se der erro, mostre a mensagem inteira ao usuário.
-- **Sessões na nuvem (claude.ai/code) não carregam plugins.** Avise o usuário se for esse o caso.
-- `claude plugin marketplace remove kuru` desinstala tudo.
+**No Claude Code na nuvem**: menu do ambiente na barra de título da sessão → *Edit* → *Network secrets* (ou variável de ambiente, se a seção não aparecer). Uma sessão nova já enxerga. Nunca cole uma chave no chat. Em *Network access*, libere `api.deepseek.com`, `openrouter.ai`, `api.cloudflare.com` e `api.higgsfield.ai`.
 
-## Peças opcionais (o plugin funciona sem elas)
-- **Cursor CLI** para tarefas longas: precisa do `agent` instalado e logado. O modelo é fixo em `grok-4.7-high-fast` (o padrão da conta é `auto`); confira com `agent models`.
-- **DeepSeek e Jev** vêm do servidor MCP `kuru-subagents`, que é do usuário e não faz parte do plugin. Sem ele, a cadeia de codificadores pula o DeepSeek e vai direto ao Sonnet.
+## Usar
+Abra o Claude Code dentro do repositório. Para levar o kit a outro projeto, copie `.claude/agents/`, `.claude/skills/`, `harness/`, `bin/` e `scripts/`, e junte as regras do `CLAUDE.md` e o bloco `hooks`/`permissions` do `.claude/settings.json` aos seus (`bin/` fica na raiz do projeto: o kit chama o launcher por `bash bin/kuru`).
 
-## Mapa do repositório
-- `agents/`, `commands/`, `hooks/`, `bin/kuru`: o plugin (subagents, comandos, hook de fim de tarefa e o launcher que acha o Python).
-- `.claude-plugin/`: manifestos do plugin e do marketplace.
-- `harness/`, `scripts/`: roteador, revisão, checagem de regras, log e runner do Cursor.
-- `CLAUDE.md`, `SPEC.md`, `TASKS.md`: regras, especificação e ledger de quem **desenvolve** este kit.
-- `tests/`: `python -m unittest discover -s tests -t .`. Para desenvolver: `claude --plugin-dir .`.
+Requisitos: Python 3 (o `bin/kuru` testa `python3`, `python` e `py` e ignora o atalho quebrado da Microsoft Store no Windows) e Git; sem Python o `bin/kuru` sai com 127; comando desconhecido ou sem argumento sai com 2. No Windows, o Claude Code roda os comandos pelo Git Bash. Opcional: Cursor CLI (`agent`), com o modelo fixo em `grok-4.7-high-fast` (o padrão da conta é `auto`; confira com `agent models`).
+
+## Mapa
+`.claude/agents/` e `.claude/skills/` (o kit), `.claude/settings.json` (hook e permissões), `harness/` e `bin/kuru` (roteador, briefing, revisão, regras, log de tarefas `tasklog`, chamadas de API), `scripts/` (hook e runner do Cursor), `CLAUDE.md`/`SPEC.md`/`TASKS.md` (regras, especificação e ledger), `tests/` (`python -m unittest discover -s tests -t .`).
+
+Já foi plugin (PR #5) e saiu: exigia prefixo em tudo e não carregava o `CLAUDE.md`. Está no histórico do git.

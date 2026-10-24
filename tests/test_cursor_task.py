@@ -33,7 +33,7 @@ class CursorTaskTest(unittest.TestCase):
         self.bin.mkdir()
         (self.bin / "agent").write_text(FAKE_AGENT)
         (self.bin / "agent").chmod(0o755)
-        (self.repo / "prompt.txt").write_text("faça X")
+        (self.repo / "prompt.txt").write_text("faça X\n\n# Regras do projeto (obrigatórias)\n- seja breve\n")
         self.env = dict(os.environ, PATH=f"{self.bin}:{os.environ['PATH']}", CLAUDE_PROJECT_DIR=str(self.repo),
                         FAKE_ARGS=str(self.d / "args"), FAKE_CWD=str(self.d / "cwd"))
 
@@ -90,6 +90,13 @@ class CursorTaskTest(unittest.TestCase):
         r = self.run_script("t6", "prompt.txt", env=dict(self.env, FAKE_EXIT="3"))
         self.assertEqual(r.returncode, 3)
         self.assertTrue((self.repo / ".claude/state/cursor/t6.diff").exists())
+
+    def test_prompt_without_project_rules_is_refused(self):
+        (self.repo / "nu.txt").write_text("faça X, sem regras nenhuma")
+        r = self.run_script("t11", "nu.txt")
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("kuru brief", r.stderr)
+        self.assertFalse((self.repo / ".claude/worktrees/t11").exists())  # nem criou o worktree
 
     def test_limit_message_maps_to_exit_76(self):
         r = self.run_script("t9", "prompt.txt", env=dict(self.env, FAKE_EXIT="1", FAKE_MSG="You have hit your usage limit"))

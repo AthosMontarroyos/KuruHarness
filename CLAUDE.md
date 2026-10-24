@@ -1,33 +1,46 @@
-# CLAUDE.md — regras do projeto KuruHarness
+# CLAUDE.md — KuruHarness
 
-Harness de sub-agents do Claude Code. O plano completo e os critérios de pronto de cada fase estão em `SPEC.md`. O estado vivo das tarefas está em `TASKS.md`.
+Kit de subagents do Claude Code. Fases e critérios: `SPEC.md`. Estado: `TASKS.md`.
+**Você decide sozinho quando delegar; nenhum comando é necessário.** O procedimento detalhado está na skill `delegar` (só carrega quando você precisar).
 
 ## Escopo
-O kit é distribuído como **plugin** do Claude Code (`.claude-plugin/`): `agents/`, `commands/`, `hooks/`, `bin/kuru` (launcher que acha o Python, também no Windows), `harness/` e `scripts/`. Os subagents ficam com o prefixo `kuru-harness:`.
-
-Este harness é do agente de código (Claude Code). O agente pessoal do usuário, e a futura migração dele para a Cloudflare, é outro projeto e está fora do escopo daqui. Por enquanto o DeepSeek segue como reserva usando o saldo que o usuário já tem lá, com o teto de US$ 5/mês aplicado pelo Worker.
+O kit mora em `.claude/` (agents e skills), `harness/`, `bin/kuru` (launcher que acha o Python, também no Windows) e `scripts/`. Não é plugin: plugin exige prefixo em tudo e não carrega este arquivo. Fora do escopo: o agente pessoal do usuário e a migração dele para a Cloudflare.
 
 ## Regras gerais
-- Só avance de fase quando o critério de pronto da fase atual passar. Registre o resultado em `TASKS.md`.
-- Máximo de 3 tentativas por tarefa. Na terceira falha, pare e reporte; não tente uma quarta.
-- Teto de custo: US$ 5/mês em DeepSeek (saldo real de US$ 5, cuidado) e em Higgsfield. O Worker bloqueia o DeepSeek sozinho ao chegar a US$ 5 estimados (ferramenta `budget_status` mostra o gasto; é estimativa, o saldo real está no painel do DeepSeek). Higgsfield ainda sem bloqueio automático: confira o gasto antes de chamar e avise o usuário ao se aproximar do teto. Jev não tem teto (usuário informa que não cobra); ainda assim, evite chamadas em loop.
-- Agentes em paralelo: de 3 a 5.
-- O revisor recebe só o diff e as regras relevantes, nunca o projeto inteiro.
-- Nunca grave tokens, chaves ou segredos no repositório. `MCP_TOKEN` e afins vivem só como secrets do Worker.
+- Só avance de fase quando o critério de pronto passar; registre o resultado em `TASKS.md`.
+- Máximo de 3 tentativas por tarefa; na terceira falha, pare e reporte. Não tente uma quarta.
+- Chaves e tokens só em variável de ambiente, nunca em arquivo.
 - Commits coesos por intenção, em português, sem push forçado nem reescrita de histórico.
+- Teto de US$ 5/mês em DeepSeek e Higgsfield. O kit NÃO soma gasto: o limite real é o saldo pré-pago na conta do provedor e a aprovação do usuário a cada geração. Jev sem teto, mas sem loops.
+- Agentes em paralelo: de 3 a 5 (Cursor: no máximo 3).
 
-## Fluxo de revisão (Fase 2)
-Use `/kuru-harness:review <task-id>`. Ordem fixa: 1) `kuru check-rules` (grátis, sem modelo); 2) `reviewer` (Haiku) recebendo só o pacote `regras relevantes + diff` gerado por `kuru review-flow check`; 3) `reviewer-senior` (Opus) somente depois de 2 reprovações do Haiku na mesma tarefa. Toda reprovação (determinística ou de modelo) conta para o limite de 3 tentativas; na 3ª, parar e reportar. Estado em `.claude/state/reviews.json`. A regra 3 é imposta tecnicamente: os revisores têm `tools: []` e `omitClaudeMd: true` (não leem arquivos nem recebem este CLAUDE.md), e o pacote vai inline no prompt, em partes de até 12 mil caracteres divididas por arquivo.
+## Autonomia: quando delegar
+Delegar custa tokens (prompt do agente, briefing e resposta). Só compensa se poupar o seu contexto ou melhorar a qualidade.
+**Faça você mesmo, sem agente:** tarefa trivial (1 arquivo, mudança pequena, baixo risco), o que já está no seu contexto, perguntas, texto e ajustes pequenos.
+**Delegue quando:**
+- for ler ou explorar mais de 6 arquivos, logs ou diffs grandes: `implementer-sonnet` (poupa o seu contexto);
+- for a mesma mudança mecânica repetida em muitos arquivos, sem decisão: `implementer-haiku`;
+- a tarefa for complexa ou de arquitetura (multi-arquivo): `planner` antes de codar;
+- a tarefa for longa (8+ arquivos, reescrita): Cursor, com briefing (seção abaixo);
+- precisar de revisão independente de mudança NÃO trivial: `reviewer` (contexto limpo);
+- precisar checar se as instruções do projeto e o código ainda batem (lê muito, 1M de contexto): `auditor`, sob demanda ou antes de fechar fase, não a cada tarefa. Chame com só a raiz e o foco (nunca a conversa) e NÃO releia o que ele leu: ele devolve só o relatório (até 25 linhas), você aplica ou descarta as propostas;
+- for decisão fechada de baixo risco: `jev-judge`; imagem ou vídeo: `creative`; reserva barata de texto: `deepseek-coder`.
+Em dúvida sobre o tamanho: `bash bin/kuru route "<tarefa>" --files ...` (grátis, sem modelo).
+**Isolamento:** todo agente começa SEM contexto. Dê só um briefing autocontido (`bash bin/kuru brief ...`), nunca a conversa, e peça resposta curta (até 15 linhas). Cada agente já carrega o que precisa na própria definição.
+**Revisão:** mudança trivial: `bash bin/kuru check-rules` basta (o hook de fim de tarefa também roda). Não trivial: fluxo de 3 estágios da skill `delegar`; o revisor recebe só diff + regras relevantes.
 
-## Cursor CLI (Fase 3)
-Coding longo vai para o Cursor: `kuru cursor-task` roda `agent -p --trust --force --model grok-4.7-high-fast` (modo agent é o padrão do CLI; `--mode` só aceita plan/ask) num git worktree por tarefa (sessão nova sempre, nunca `--resume`), no máximo 3 em paralelo, e devolve o diff para o `/kuru-harness:review` antes de aplicar. O modelo é fixo no script (`CURSOR_MODEL` para trocar) porque o padrão da conta é `auto`, não o Grok 4.7. Se o Cursor estiver indisponível (sem saldo, deslogado, CLI ausente), a tarefa longa desce a cadeia **Cursor → DeepSeek (só texto, tarefa sem risco alto) → Sonnet** (`planner` + `implementer-sonnet`), conforme o campo `cadeia` de `harness.route`. O texto do erro de "sem saldo" do Cursor não foi observado: qualquer falha do `cursor-task.sh` conta como indisponível. Confira os ids com `agent models`. Usar `CURSOR_API_KEY` não evita que o CLI grave a credencial em `~/.config/cursor`: em máquina compartilhada rode `agent logout` depois. `--force` libera comandos sem confirmação, por isso o `--sandbox enabled` por padrão e o worktree isolado.
+## Cursor (não lê este arquivo)
+O Cursor NÃO recebe o `CLAUDE.md` nem nenhuma instrução do projeto: tudo vai escrito no prompt. Gere sempre com `bash bin/kuru brief --task ... --files ... --criteria ... --tests ... --out .kuru/<id>.prompt`; o `bash bin/kuru cursor-task` recusa prompt sem as regras. Modelo padrão `grok-4.7-high-fast` (`CURSOR_MODEL` sobrescreve). Se o Cursor estiver indisponível (sem saldo, CLI ausente; deslogado aparece no log, veja a skill): DeepSeek (tarefa sem risco alto) e depois Sonnet. Aplique o diff só depois de revisar.
 
-## Roteamento inicial (proposta; ajustar com os logs da Fase 6)
-- Trivial (1 arquivo, baixo risco): Haiku.
-- Média: Sonnet.
-- Multi-arquivo ou arquitetura: `planner` (Opus). Fable só se o Opus falhar duas vezes.
+## Provedores e chaves
+Variáveis de ambiente: `DEEPSEEK_API_KEY` (DeepSeek, OpenRouter `sk-or-` ou Workers AI com `CLOUDFLARE_ACCOUNT_ID`), `JEV_API_KEY` (Workers AI), `HIGGSFIELD_API_KEY` (só gera com `--yes` e com a aprovação do usuário), `CURSOR_API_KEY`. Conferir sem gastar: `bash bin/kuru ask-deepseek --dry-run`. O Jev erra com confiança alta (87,5% de acerto contra 97,5% do Haiku): é indício, nunca prova, e não serve de porteiro de diffs. Os formatos completos estão nas definições de `jev-judge`, `creative` e `deepseek-coder` e em `bash bin/kuru ask-jev --example`.
 
-## Ferramentas externas (MCP `kuru-subagents`)
-- `ask_jev`: julgador rápido, sem raciocínio: lê o estado e devolve probabilidades por opção. Serve para acelerar decisões no meio da tarefa (rotear, aprovar/reprovar, urgente ou não), inclusive como porteiro de diffs (Fase 4). Quem raciocina é o Haiku/Claude; use o Jev quando a decisão cabe em opções fechadas. Sempre escreva as regras/critérios no texto da pergunta (sem isso ele aprova quase tudo). Medido na Fase 4: 87,5% de acerto contra 97,5% do Haiku, e a confiança dele NÃO é calibrada (errou com 0,98). O próprio criador do Jev avisa que ele não foi feito para nunca alucinar: trate a saída como indício probabilístico, nunca como prova, e nunca deixe uma ação irreversível depender só dele. Por isso não use o Jev como porteiro de conformidade de diffs; use em roteamento e triagem de baixo risco. Entrada: `state` (string com o diff) e `questions` (objeto; cada pergunta é `{type, instructions, criteria?}` com `type` = `noul` (sim/não, devolve probabilidade), `choice` (criteria = objeto opção→descrição) ou `score` (criteria = lista ordenada)). Uma pergunta que seja string solta dá erro 502/7003. Saída: `{state:"Completed", result:{answers:{...}, usage}}`. Ele só julga, não explica nem pensa; baixa confiança (`confidence` baixa ou probabilidades próximas) escala para o Haiku.
-- `ask_deepseek`: reserva para tarefas não sensíveis ou limite estourado (Fase 5). Só devolve texto; o Claude Code aplica o patch.
-- `higgsfield_*`: criatividade, fora deste plano.
+## Regras para quem codifica (entram por extenso no briefing de qualquer agente, inclusive o Cursor)
+- Siga o estilo do código ao redor: nomes, idioma e densidade de comentários do arquivo. Comentários, mensagens e documentação em português, a menos que o arquivo já use outro idioma.
+- Faça a menor mudança que cumpre a tarefa. Não refatore nem renomeie o que não foi pedido.
+- Se o projeto tem testes, escreva ou atualize os testes junto e rode a suíte antes de terminar.
+- Todo arquivo em `.claude/agents/` declara `model` no frontmatter.
+- Em `TASKS.md`, só marque `[x]` com o comando e o resultado na mesma linha.
+- O limite de 3 tentativas por tarefa não pode ser aumentado nem removido, em código, hook ou documentação.
+- Arquivos de trabalho temporários (prompts, saídas) vão em `.kuru/` (ignorada pelo git), nunca em `.claude/`, que o Claude Code protege. `.claude/state/` e `.claude/worktrees/` são só dos scripts do kit.
+- Nunca grave chaves, tokens ou senhas em arquivo.

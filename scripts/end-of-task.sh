@@ -2,7 +2,7 @@
 # Hook Stop: roda testes, linter e typecheck do projeto, se configurados.
 # Reprova (exit 2) devolvendo o erro ao Claude. Máximo de 3 tentativas por tarefa.
 set -u
-# O kit é achado pela localização deste script (funciona instalado como plugin ou clonado, e no Windows).
+# O kit é achado pela localização deste script (funciona em qualquer pasta do projeto e no Windows).
 KURU="$(cd "$(dirname "${BASH_SOURCE[0]}")/../bin" && pwd)/kuru"
 cd "${CLAUDE_PROJECT_DIR:-.}"
 # O Claude Code passa um JSON (session_id, transcript_path) no stdin; sem stdin, segue sem ele.
