@@ -6,13 +6,14 @@ A chave vem de variável de ambiente e pode ser de provedores diferentes:
   CLOUDFLARE_ACCOUNT_ID: obrigatório quando a chave é do Workers AI.
 Opcionais: *_PROVIDER (deepseek | openrouter | workers-ai), *_BASE_URL, *_MODEL.
 
-Saídas: 0 ok | 2 configuração/entrada inválida | 3 erro do provedor | 76 saldo ou limite esgotado.
+Saídas: 0 ok | 2 configuração/entrada inválida | 3 erro do provedor | 4 resposta sem diff válido | 76 saldo ou limite esgotado.
 A chave nunca é impressa.
 """
 import argparse
 import json
 import os
 import re
+import subprocess
 import sys
 import urllib.error
 import urllib.request
@@ -171,6 +172,32 @@ def ask_jev(state, questions, env=None):
     return data.get("result", data), cfg
 
 
+def extract_diff(text):
+    """Pega o primeiro bloco ```diff (ou o texto inteiro, se já for um diff) que tenha cabeçalho ---/+++."""
+    for m in re.finditer(r"```(?:diff|patch)?[ \t]*\n(.*?)\n?```", text, re.S):
+        block = m.group(1)
+        if re.search(r"(?m)^--- ", block) and re.search(r"(?m)^\+\+\+ ", block):
+            return block.strip("\n") + "\n"
+    if re.match(r"\s*(diff --git|--- )", text) and re.search(r"(?m)^\+\+\+ ", text):
+        return text.strip("\n") + "\n"
+    return ""
+
+
+def git_apply_check(path):
+    """(ok, mensagem) de `git apply --check`: valida que o diff aplica, sem aplicar."""
+    try:
+        r = subprocess.run(["git", "apply", "--check", path], capture_output=True, text=True, timeout=60)
+    except (OSError, subprocess.SubprocessError) as e:
+        return False, f"não consegui rodar git: {e}"
+    return r.returncode == 0, (r.stderr or r.stdout).strip()
+
+
+def _write(path, text):
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(text)
+
+
 def _public(cfg):
     return {"provider": cfg["provider"], "url": cfg["url"], "model": cfg["model"], "key": f"definida ({len(cfg['key'])} caracteres)"}
 
@@ -187,6 +214,8 @@ def deepseek_main(argv=None):
     g.add_argument("--prompt-file")
     p.add_argument("--system", default="")
     p.add_argument("--max-tokens", type=int)
+    p.add_argument("--out", help="grava a resposta neste arquivo em vez de imprimir")
+    p.add_argument("--diff-out", help="extrai o bloco ```diff da resposta para este arquivo e valida com git apply --check")
     p.add_argument("--dry-run", action="store_true", help="mostra provedor, URL e modelo sem chamar")
     a = p.parse_args(argv)
     try:
@@ -199,8 +228,26 @@ def deepseek_main(argv=None):
         text, usage, cfg = ask_deepseek(prompt, a.system, a.max_tokens)
     except (ConfigError, ProviderError, OSError) as e:
         return _fail(e)
-    print(text)
-    print(f"[{cfg['provider']} · {cfg['model']} · {usage}]", file=sys.stderr)
+    meta = {"provedor": cfg["provider"], "modelo": cfg["model"], "uso": usage}
+    try:
+        if a.out:
+            _write(a.out, text + "\n")
+        if a.diff_out:
+            diff = extract_diff(text)
+            if not diff:
+                print("erro: a resposta não traz um diff unificado (bloco ```diff com --- e +++)", file=sys.stderr)
+                return 4
+            _write(a.diff_out, diff)
+            ok, msg = git_apply_check(a.diff_out)
+            print(json.dumps({**meta, "diff": a.diff_out, "git_apply_check": "ok" if ok else msg[:300]}, ensure_ascii=False))
+            return 0 if ok else 4
+    except OSError as e:
+        return _fail(e)
+    if a.out:
+        print(json.dumps({**meta, "saida": a.out}, ensure_ascii=False))
+    else:
+        print(text)
+        print(f"[{cfg['provider']} · {cfg['model']} · {usage}]", file=sys.stderr)
     return 0
 
 

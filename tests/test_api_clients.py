@@ -2,6 +2,8 @@ import contextlib
 import io
 import json
 import os
+import subprocess
+import tempfile
 import threading
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -47,6 +49,11 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(402, {"error": "Insufficient Balance"})
         if p.endswith("/e401/chat/completions"):
             return self._send(401, {"error": "bad key " + self.headers["Authorization"]})
+        if "/diffok/" in p:
+            txt = "Aqui está:\n```diff\n--- a/a.txt\n+++ b/a.txt\n@@ -1 +1 @@\n-ola mundo\n+ola harness\n```\nFeito."
+            return self._send(200, {"choices": [{"message": {"content": txt}}], "usage": {}})
+        if "/nodiff/" in p:
+            return self._send(200, {"choices": [{"message": {"content": "não sei fazer isso"}}], "usage": {}})
         if p.endswith("/chat/completions"):
             return self._send(200, {"choices": [{"message": {"content": "<think>pensando</think>\n\nola"}}], "usage": {"total_tokens": 5}})
         if p.endswith("/jevfail"):
@@ -156,6 +163,57 @@ class ApiTest(unittest.TestCase):
         self.assertEqual((code, out), (2, ""))
         self.assertIn("DEEPSEEK_API_KEY", err)
         self.assertEqual(Handler.log, [])
+
+    # ---------- DeepSeek: --diff-out e --out ----------
+    def repo_with(self, content):
+        d = tempfile.TemporaryDirectory()
+        self.addCleanup(d.cleanup)
+        old = os.getcwd()
+        os.chdir(d.name)
+        self.addCleanup(os.chdir, old)
+        subprocess.run(["git", "init", "-q"], check=True)
+        with open("a.txt", "w") as f:
+            f.write(content)
+        return d.name
+
+    def test_diff_out_extracts_block_and_validates_with_git_apply(self):
+        self.repo_with("ola mundo\n")
+        code, out, err = self.run_cli(llm.deepseek_main, ["--prompt", "troque", "--diff-out", ".kuru/t.diff"],
+                                      DEEPSEEK_API_KEY=DS, DEEPSEEK_BASE_URL=self.base + "/diffok")
+        self.assertEqual(code, 0, err)
+        res = json.loads(out)
+        self.assertEqual((res["git_apply_check"], res["diff"], res["provedor"]), ("ok", ".kuru/t.diff", "deepseek"))
+        diff = open(".kuru/t.diff").read()
+        self.assertTrue(diff.startswith("--- a/a.txt") and diff.endswith("+ola harness\n"))
+        self.assertNotIn("```", diff)
+        self.assertEqual(open("a.txt").read(), "ola mundo\n")  # só valida, nunca aplica
+
+    def test_diff_out_exit_4_when_diff_does_not_apply_or_is_missing(self):
+        self.repo_with("conteudo diferente\n")
+        code, out, _ = self.run_cli(llm.deepseek_main, ["--prompt", "x", "--diff-out", "t.diff"],
+                                    DEEPSEEK_API_KEY=DS, DEEPSEEK_BASE_URL=self.base + "/diffok")
+        self.assertEqual(code, 4)
+        self.assertNotEqual(json.loads(out)["git_apply_check"], "ok")
+        code, out, err = self.run_cli(llm.deepseek_main, ["--prompt", "x", "--diff-out", "t2.diff"],
+                                      DEEPSEEK_API_KEY=DS, DEEPSEEK_BASE_URL=self.base + "/nodiff")
+        self.assertEqual((code, out), (4, ""))
+        self.assertIn("diff unificado", err)
+        self.assertFalse(os.path.exists("t2.diff"))
+
+    def test_out_writes_file_instead_of_printing_the_answer(self):
+        self.repo_with("x\n")
+        code, out, _ = self.run_cli(llm.deepseek_main, ["--prompt", "oi", "--out", ".kuru/r.txt"],
+                                    DEEPSEEK_API_KEY=DS, DEEPSEEK_BASE_URL=self.base + "/ok")
+        self.assertEqual(code, 0)
+        self.assertEqual(open(".kuru/r.txt").read().strip(), "ola")
+        self.assertEqual(json.loads(out)["saida"], ".kuru/r.txt")
+
+    def test_extract_diff_variants(self):
+        d = "--- a/x\n+++ b/x\n@@ -1 +1 @@\n-a\n+b\n"
+        self.assertEqual(llm.extract_diff("texto\n```diff\n" + d + "```\nfim"), d)
+        self.assertEqual(llm.extract_diff("```\n" + d + "```"), d)
+        self.assertEqual(llm.extract_diff(d), d)
+        self.assertEqual(llm.extract_diff("```python\nprint(1)\n```"), "")
 
     # ---------- Jev ----------
     def jev_args(self, questions):

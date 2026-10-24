@@ -21,4 +21,4 @@ Saída: JSON com `request_id`, `status` (`queued`, `in_progress`, `completed`, `
 - `/higgsfield/genjutsu/motion-transfer/v1.0`: transferência de movimento. `{"video_url", "image_urls": [...], "resolution": "720p"}` (e opcional `prompt`).
 O endpoint começa com `/`, sem host nem `..`.
 
-**Fluxo**: 1) entenda o pedido criativo; 2) escreva um prompt específico (assunto, estilo, luz, enquadramento, o que evitar); 3) grave o corpo em `.claude/state/higgsfield/<nome>.json`; 4) confirme a aprovação do gasto; 5) rode, e se ficar pendente acompanhe com `status`. Devolva os links, o `request_id` e quantas gerações pagas fez.
+**Fluxo**: 1) entenda o pedido criativo; 2) escreva um prompt específico (assunto, estilo, luz, enquadramento, o que evitar); 3) grave o corpo em `.kuru/higgsfield/<nome>.json` (fora de `.claude/`, que o Claude Code protege); 4) confirme a aprovação do gasto; 5) rode, e se ficar pendente acompanhe com `status`. Devolva os links, o `request_id` e quantas gerações pagas fez.
