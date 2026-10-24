@@ -2,9 +2,9 @@
 
 Kit de subagents para o **Claude Code**, distribuído como plugin. Roteia cada tarefa pelo tamanho, implementa com o modelo certo, revisa o diff em 3 estágios e registra o resultado.
 
-## Para o Claude que recebeu este link: instale assim
+## Instalação
 
-O usuário te mandou o link deste repositório para você instalar o kit. Faça só isto, nesta ordem, e **não clone o repo**:
+Passos para instalar o kit no Claude Code, pensados para o Claude executar a pedido do usuário (ou para o usuário rodar à mão). Sem clonar o repositório:
 
 1. **Confira o ambiente**: `claude --version` (precisa de 2.1.292 ou mais novo), `python3 --version` (ou `python`, ou `py`; qualquer Python 3) e `git --version`.
 2. **Instale o plugin** pelo shell:
@@ -12,17 +12,17 @@ O usuário te mandou o link deste repositório para você instalar o kit. Faça 
    claude plugin install kuru-harness --marketplace AthosMontarroyos/KuruHarness
    ```
    Se o `claude` for mais antigo que 2.1.292 (e tiver pelo menos 2.1.275): `claude plugin marketplace add AthosMontarroyos/KuruHarness` e depois `claude plugin install kuru-harness@kuru`.
-3. **Confirme**: `claude plugin details kuru-harness` deve listar **6 Agents, 3 Skills (comandos) e 1 Hook**. Se listar menos, pare e mostre a saída ao usuário.
+3. **Confirme**: `claude plugin details kuru-harness` deve listar **6 Agents, 3 Skills e 1 Hook** (os 3 comandos aparecem como Skills no `details`). Se listar menos, pare e mostre a saída ao usuário.
 4. **Avise o usuário** que ele precisa rodar `/reload-plugins` (ou reiniciar a sessão) e que os comandos novos são:
    - `/kuru-harness:task <id> <descrição>`: roteia, implementa, verifica e revisa uma tarefa;
    - `/kuru-harness:review <id>`: revisa o diff atual (regras fixas, depois Haiku, depois Opus só após 2 reprovações);
    - `/kuru-harness:fallback <id> <descrição>`: faz uma tarefa não sensível pelo DeepSeek.
 5. **Teste rápido** (opcional): `kuru route "corrigir typo" --files a.md` deve devolver `{"tier": "trivial", ...}`.
 
-### O que NÃO fazer
-- Não clone este repositório, não copie arquivos dele para o projeto do usuário e não rode scripts baixados.
-- Não grave chaves, tokens nem senhas em arquivo nenhum. Se o usuário quiser o Cursor, a chave vai só na variável de ambiente `CURSOR_API_KEY`; não rode `agent login` sem ele pedir.
-- Não altere o `CLAUDE.md`, o `settings.json` nem as permissões do usuário sem perguntar. Duas sugestões para **oferecer** (cada uma só com o "sim" dele):
+### Cuidados
+- A instalação não precisa clonar este repositório, copiar arquivos dele para o projeto nem rodar scripts baixados.
+- Chaves, tokens e senhas não vão para arquivo nenhum. Para usar o Cursor, a chave vai só na variável de ambiente `CURSOR_API_KEY`; `agent login` só se o usuário pedir.
+- O `CLAUDE.md`, o `settings.json` e as permissões do usuário só mudam com o "sim" dele. Duas sugestões para oferecer:
   - Regras de permissão, porque um plugin não consegue trazê-las e, sem elas, cada passo do `/kuru-harness:task` pede aprovação. Acrescentar a `~/.claude/settings.json`:
     ```json
     { "permissions": { "allow": [ "Bash(kuru *)", "Bash(git diff*)", "Bash(git status*)", "Bash(git apply*)", "Bash(git add -N*)" ] } }
