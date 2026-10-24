@@ -17,6 +17,9 @@ Este harness é do agente de código (Claude Code). O agente pessoal do usuário
 ## Fluxo de revisão (Fase 2)
 Use `/review <task-id>`. Ordem fixa: 1) `harness/check_rules.py` (grátis, sem modelo); 2) `reviewer` (Haiku) recebendo só o pacote `regras relevantes + diff` gerado por `python3 -m harness.review_flow check`; 3) `reviewer-senior` (Opus) somente depois de 2 reprovações do Haiku na mesma tarefa. Toda reprovação (determinística ou de modelo) conta para o limite de 3 tentativas; na 3ª, parar e reportar. Estado em `.claude/state/reviews.json`. A regra 3 é imposta tecnicamente: os revisores têm `tools: []` e `omitClaudeMd: true` (não leem arquivos nem recebem este CLAUDE.md), e o pacote vai inline no prompt, em partes de até 12 mil caracteres divididas por arquivo.
 
+## Cursor CLI (Fase 3)
+Coding longo vai para o Cursor: `scripts/cursor-task.sh` roda `agent -p --trust --force --mode agent --model grok-4.7-high-fast` num git worktree por tarefa (sessão nova sempre, nunca `--resume`), no máximo 3 em paralelo, e devolve o diff para o `/review` antes de aplicar. O modelo é fixo no script (`CURSOR_MODEL` para trocar), não depende do padrão da máquina. `--force` libera comandos sem confirmação, por isso o `--sandbox enabled` por padrão e o worktree isolado.
+
 ## Roteamento inicial (proposta; ajustar com os logs da Fase 6)
 - Trivial (1 arquivo, baixo risco): Haiku.
 - Média: Sonnet.

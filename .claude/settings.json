@@ -20,7 +20,8 @@
       "Bash(python3 -m unittest *)",
       "Bash(bash scripts/end-of-task.sh*)",
       "Bash(git diff*)",
-      "Bash(git status*)"
+      "Bash(git status*)",
+      "Bash(bash scripts/cursor-task.sh*)"
     ]
   }
 }

@@ -1,3 +1,4 @@
 .claude/state/
 __pycache__/
 *.pyc
+.claude/worktrees/
