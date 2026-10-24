@@ -18,6 +18,7 @@ COMMANDS = {
     "ask-deepseek": "harness.llm:deepseek_main",   # "módulo:função" quando não é `main`
     "ask-jev": "harness.llm:jev_main",
     "higgsfield": "harness.higgsfield",
+    "install": "harness.install",
 }
 
 

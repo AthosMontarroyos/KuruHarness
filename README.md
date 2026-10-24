@@ -36,7 +36,9 @@ Para trocar provedor ou modelo: `DEEPSEEK_PROVIDER`, `DEEPSEEK_BASE_URL`, `DEEPS
 **No Claude Code na nuvem**: menu do ambiente na barra de título da sessão → *Edit* → *Network secrets* (ou variável de ambiente, se a seção não aparecer). Uma sessão nova já enxerga. Nunca cole uma chave no chat. Em *Network access*, libere `api.deepseek.com`, `openrouter.ai`, `api.cloudflare.com` e `api.higgsfield.ai`.
 
 ## Usar
-Abra o Claude Code dentro do repositório. Para levar o kit a outro projeto, copie `.claude/agents/`, `.claude/skills/`, `harness/`, `bin/` e `scripts/`, e junte as regras do `CLAUDE.md` e o bloco `hooks`/`permissions` do `.claude/settings.json` aos seus (`bin/` fica na raiz do projeto: o kit chama o launcher por `bash bin/kuru`).
+Abra o Claude Code dentro do repositório para usar o kit só nele.
+
+**Para valer em todos os projetos (configuração global):** `bash bin/kuru install --global` (use `--dry-run` para ver antes). Copia o kit para `~/.claude/kuru`, os agents para `~/.claude/agents` e a skill para `~/.claude/skills`, troca `bash bin/kuru` pelo caminho global, junta a política de delegação no seu `~/.claude/CLAUDE.md` (entre marcadores `kuru:begin/end`, uns 4 mil caracteres que passam a custar tokens em TODO projeto) e o hook e as permissões no `~/.claude/settings.json`, guardando `.kuru-bak` do que existia. Rodar de novo atualiza; arquivo seu com o mesmo nome não é sobrescrito sem `--force`. No modo global o hook de fim de tarefa confere só o diff (não varre o repositório alheio). Para voltar atrás: apague `~/.claude/kuru`, os agents/skills listados em `~/.claude/kuru/.manifest.json`, o bloco entre os marcadores e a entrada do hook.
 
 Requisitos: Python 3 (o `bin/kuru` testa `python3`, `python` e `py` e ignora o atalho quebrado da Microsoft Store no Windows) e Git; sem Python o `bin/kuru` sai com 127; comando desconhecido ou sem argumento sai com 2. No Windows, o Claude Code roda os comandos pelo Git Bash. Opcional: Cursor CLI (`agent`), com o modelo fixo em `grok-4.7-high-fast` (o padrão da conta é `auto`; confira com `agent models`).
 

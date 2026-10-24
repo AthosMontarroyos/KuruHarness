@@ -27,7 +27,12 @@ fi
 [ -f pyproject.toml ] && command -v ruff   >/dev/null && run ruff ruff check .
 [ -f pyproject.toml ] && command -v mypy   >/dev/null && run mypy mypy .
 [ -f tests/__init__.py ] && run unittest bash "$KURU" unittest
-run regras bash "$KURU" check-rules
+# KURU_RULES_MODE=diff (instalação global): em projeto alheio, confere só o que mudou, não o repo inteiro
+if [ "${KURU_RULES_MODE:-tree}" = diff ]; then
+  run regras bash -c 'git diff HEAD 2>/dev/null | bash "$0" check-rules --diff' "$KURU"
+else
+  run regras bash "$KURU" check-rules
+fi
 
 log_task() { # resultado, tentativas -> .claude/state/tasks.jsonl (nunca derruba o hook)
   bash "$KURU" hooklog --result "$1" --attempts "$2" 2>/dev/null || true
