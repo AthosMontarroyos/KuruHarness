@@ -1,8 +1,0 @@
-{
-  "name": "kuru",
-  "description": "Kit de subagents do KuruHarness",
-  "owner": { "name": "Athos Montarroyos" },
-  "plugins": [
-    { "name": "kuru-harness", "source": "./", "description": "Subagents, comandos e hook de fim de tarefa do KuruHarness" }
-  ]
-}

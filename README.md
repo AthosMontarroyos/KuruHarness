@@ -1,46 +1,22 @@
 # KuruHarness
 
-Kit de subagents para o **Claude Code**, distribuído como plugin. Roteia cada tarefa pelo tamanho, implementa com o modelo certo, revisa o diff em 3 estágios e registra o resultado.
+Kit de subagents para o **Claude Code**: roteia cada tarefa pelo tamanho, implementa com o modelo certo, revisa o diff em 3 estágios e registra o resultado.
 
-## Instalação
+## Como usar
 
-Passos para instalar o kit no Claude Code, pensados para o Claude executar a pedido do usuário (ou para o usuário rodar à mão). Sem clonar o repositório:
+Abra o Claude Code **dentro deste repositório**. Tudo vale sem instalar nada: subagents e comandos (`/task`, `/review`, `/fallback`) ficam em `.claude/`, o `CLAUDE.md` carrega sozinho (inclusive o formato do `ask_jev`) e o hook de fim de tarefa vem de `.claude/settings.json`.
 
-1. **Confira o ambiente**: `claude --version` (precisa de 2.1.292 ou mais novo), `python3 --version` (ou `python`, ou `py`; qualquer Python 3) e `git --version`.
-2. **Instale o plugin** pelo shell:
-   ```
-   claude plugin install kuru-harness --marketplace AthosMontarroyos/KuruHarness
-   ```
-   Se o `claude` for mais antigo que 2.1.292 (e tiver pelo menos 2.1.275): `claude plugin marketplace add AthosMontarroyos/KuruHarness` e depois `claude plugin install kuru-harness@kuru`.
-3. **Confirme**: `claude plugin details kuru-harness` deve listar **6 Agents, 3 Skills e 1 Hook** (os 3 comandos aparecem como Skills no `details`). Se listar menos, pare e mostre a saída ao usuário.
-4. **Avise o usuário** que ele precisa rodar `/reload-plugins` (ou reiniciar a sessão) e que os comandos novos são:
-   - `/kuru-harness:task <id> <descrição>`: roteia, implementa, verifica e revisa uma tarefa;
-   - `/kuru-harness:review <id>`: revisa o diff atual (regras fixas, depois Haiku, depois Opus só após 2 reprovações);
-   - `/kuru-harness:fallback <id> <descrição>`: faz uma tarefa não sensível pelo DeepSeek.
-5. **Teste rápido** (opcional): `kuru route "corrigir typo" --files a.md` deve devolver `{"tier": "trivial", ...}`.
+Para levar o kit a outro projeto, copie `.claude/agents/`, `.claude/commands/`, `harness/`, `bin/` e `scripts/`, e junte as regras do `CLAUDE.md` e o bloco `hooks`/`permissions` do `.claude/settings.json` aos seus. Os comandos chamam o launcher por `bash bin/kuru`, então `bin/` precisa estar na raiz do projeto.
 
-### Cuidados
-- A instalação não precisa clonar este repositório, copiar arquivos dele para o projeto nem rodar scripts baixados.
-- Chaves, tokens e senhas não vão para arquivo nenhum. Para usar o Cursor, a chave vai só na variável de ambiente `CURSOR_API_KEY`; `agent login` só se o usuário pedir.
-- O `CLAUDE.md`, o `settings.json` e as permissões do usuário só mudam com o "sim" dele. Duas sugestões para oferecer:
-  - Regras de permissão, porque um plugin não consegue trazê-las e, sem elas, cada passo do `/kuru-harness:task` pede aprovação. Acrescentar a `~/.claude/settings.json`:
-    ```json
-    { "permissions": { "allow": [ "Bash(kuru *)", "Bash(git diff*)", "Bash(git status*)", "Bash(git apply*)", "Bash(git add -N*)" ] } }
-    ```
-  - Atualização automática: marketplaces de terceiros vêm com ela desligada. Ligar em `/plugin` → aba Marketplaces → `kuru` → Enable auto-update. Sem isso, atualizar com `claude plugin update kuru-harness@kuru`.
+## Requisitos
+- Python 3 (o `bin/kuru` testa `python3`, `python` e `py` e ignora o atalho quebrado da Microsoft Store no Windows) e Git. No Windows, o Claude Code roda os comandos pelo Git Bash.
+- Opcionais: **Cursor CLI** (`agent`) para tarefas longas, com o modelo fixo em `grok-4.7-high-fast` (o padrão da conta é `auto`; confira com `agent models`); e o servidor MCP `kuru-subagents` (DeepSeek e Jev), que é do usuário e não faz parte deste repo. Sem ele, a cadeia de codificadores pula o DeepSeek e vai ao Sonnet.
 
-### Se algo falhar
-- **Windows**: o Claude Code roda os comandos com o Git Bash. O `kuru` procura `python3`, `python` e `py` e testa cada um, ignorando o `python3` da Microsoft Store (que não roda nada). Se der erro, mostre a mensagem inteira ao usuário.
-- **Sessões na nuvem (claude.ai/code) não carregam plugins.** Avise o usuário se for esse o caso.
-- `claude plugin marketplace remove kuru` desinstala tudo.
+## Mapa
+- `.claude/agents/`, `.claude/commands/`, `.claude/settings.json`: o kit.
+- `harness/`, `scripts/`, `bin/kuru`: roteador, revisão, checagem de regras, log e runner do Cursor.
+- `CLAUDE.md`, `SPEC.md`, `TASKS.md`: regras, especificação e ledger.
+- `tests/`: `python -m unittest discover -s tests -t .`.
 
-## Peças opcionais (o plugin funciona sem elas)
-- **Cursor CLI** para tarefas longas: precisa do `agent` instalado e logado. O modelo é fixo em `grok-4.7-high-fast` (o padrão da conta é `auto`); confira com `agent models`.
-- **DeepSeek e Jev** vêm do servidor MCP `kuru-subagents`, que é do usuário e não faz parte do plugin. Sem ele, a cadeia de codificadores pula o DeepSeek e vai direto ao Sonnet.
-
-## Mapa do repositório
-- `agents/`, `commands/`, `hooks/`, `bin/kuru`: o plugin (subagents, comandos, hook de fim de tarefa e o launcher que acha o Python).
-- `.claude-plugin/`: manifestos do plugin e do marketplace.
-- `harness/`, `scripts/`: roteador, revisão, checagem de regras, log e runner do Cursor.
-- `CLAUDE.md`, `SPEC.md`, `TASKS.md`: regras, especificação e ledger de quem **desenvolve** este kit.
-- `tests/`: `python -m unittest discover -s tests -t .`. Para desenvolver: `claude --plugin-dir .`.
+## Por que não é plugin
+Foi plugin por um tempo (PR #5) e saiu: todo comando e agent ganhava prefixo, um plugin não carrega o `CLAUDE.md` (e o Claude deixava de saber o formato do Jev) e não traz regras de permissão. Está no histórico do git.

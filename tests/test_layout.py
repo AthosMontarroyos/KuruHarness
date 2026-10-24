@@ -10,31 +10,30 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 
 
-class PluginLayoutTest(unittest.TestCase):
-    def test_manifests_and_names(self):
-        plugin = json.loads((ROOT / ".claude-plugin/plugin.json").read_text())
-        market = json.loads((ROOT / ".claude-plugin/marketplace.json").read_text())
-        self.assertEqual(plugin["name"], "kuru-harness")
-        self.assertEqual(market["plugins"][0]["name"], plugin["name"])  # nome do plugin = nome da entrada
-        self.assertEqual(market["plugins"][0]["source"], "./")
-
-    def test_every_agent_declares_model_and_is_in_plugin_dir(self):
-        agents = sorted((ROOT / "agents").glob("*.md"))
+class LayoutTest(unittest.TestCase):
+    def test_every_agent_declares_model(self):
+        agents = sorted((ROOT / ".claude/agents").glob("*.md"))
         self.assertGreaterEqual(len(agents), 6)
         for a in agents:
-            self.assertRegex(a.read_text(), r"(?m)^model:\s*\S+", a.name)
-        self.assertFalse((ROOT / ".claude/agents").exists())  # layout antigo não pode voltar (duplicaria)
+            self.assertRegex(a.read_text(encoding="utf-8"), r"(?m)^model:\s*\S+", a.name)
 
-    def test_stop_hook_points_at_plugin_root_script(self):
-        hooks = json.loads((ROOT / "hooks/hooks.json").read_text())
-        cmd = hooks["hooks"]["Stop"][0]["hooks"][0]["command"]
-        self.assertIn("${CLAUDE_PLUGIN_ROOT}", cmd)
+    def test_plugin_packaging_is_gone(self):
+        # o plugin foi removido de propósito (prefixos obrigatórios e o CLAUDE.md não carrega); não pode voltar sem decisão
+        for p in (".claude-plugin", "hooks", "agents", "commands", "install.sh"):
+            self.assertFalse((ROOT / p).exists(), p)
+
+    def test_stop_hook_is_in_project_settings(self):
+        settings = json.loads((ROOT / ".claude/settings.json").read_text(encoding="utf-8"))
+        cmd = settings["hooks"]["Stop"][0]["hooks"][0]["command"]
         self.assertIn("end-of-task.sh", cmd)
         self.assertTrue((ROOT / "scripts/end-of-task.sh").exists())
 
-    def test_commands_use_kuru_not_python3(self):
-        for f in list((ROOT / "commands").glob("*.md")) + list((ROOT / "agents").glob("*.md")):
-            self.assertNotRegex(f.read_text(), r"python3 -m harness", f.name)
+    def test_commands_call_the_repo_launcher(self):
+        for f in list((ROOT / ".claude/commands").glob("*.md")) + list((ROOT / ".claude/agents").glob("*.md")):
+            text = f.read_text(encoding="utf-8")
+            self.assertNotRegex(text, r"python3 -m harness", f.name)
+            self.assertNotIn("kuru-harness", text, f.name)
+            self.assertNotRegex(text, r"(?<!bin/)kuru (route|check-rules|review-flow|tasklog|cursor-task)\b", f.name)
 
     def test_windows_safe_line_endings_configured(self):
         ga = (ROOT / ".gitattributes").read_text()
