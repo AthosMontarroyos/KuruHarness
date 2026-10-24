@@ -3,6 +3,8 @@
 # da Microsoft Store que não roda nada: por isso cada candidato é testado de verdade antes de usar.
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 [ "${1:-}" = "cursor-task" ] && { shift; exec bash "$here/../scripts/cursor-task.sh" "$@"; }
+# Windows: console e arquivos em UTF-8, senão acento e travessão podem quebrar a saída
+export PYTHONUTF8=1 PYTHONIOENCODING=utf-8
 py=""
 for c in python3 python py; do
   if command -v "$c" >/dev/null 2>&1 && "$c" -c 'import sys; sys.exit(0 if sys.version_info[0] == 3 else 1)' >/dev/null 2>&1; then

@@ -1,7 +1,7 @@
 """Ponto de entrada único do kit: `kuru <comando> ...` (veja bin/kuru).
 
 Não depende de PYTHONPATH nem de `python3 -m`: insere a raiz do kit no sys.path sozinho, então
-funciona igual no Linux, no macOS e no Windows (Git Bash), a partir do projeto clonado ou copiado.
+funciona igual no Linux, no macOS e no Windows (Git Bash), a partir do clone do harness ou da instalação global (~/.claude/kuru).
 """
 import importlib
 import os
@@ -18,6 +18,7 @@ COMMANDS = {
     "ask-deepseek": "harness.llm:deepseek_main",   # "módulo:função" quando não é `main`
     "ask-jev": "harness.llm:jev_main",
     "higgsfield": "harness.higgsfield",
+    "install": "harness.install",
 }
 
 

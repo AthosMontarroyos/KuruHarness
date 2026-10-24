@@ -31,14 +31,19 @@ FALLBACK_LONGA = ["planner", "implementer-sonnet"]
 CHAIN_LONGA = ["cursor", "deepseek", "planner", "implementer-sonnet"]
 
 TRIVIAL_KW = re.compile(r"(?i)\b(typo|erro de digita[cç][aã]o|renomear|comentario|coment[aá]rio|texto|readme|docstring|formata[cç][aã]o|lint)\b")
-COMPLEX_KW = re.compile(r"(?i)\b(arquitetura|refator\w*|migra\w*|redesenh\w*|multi-?arquivo|m[oó]dulo novo|api p[uú]blica|esquema|schema)\b")
+COMPLEX_KW = re.compile(r"(?i)\b(arquitetura|projet(?:e|ar|ando)\b|design|decis[aã]o de design|refator\w*|migra\w*|redesenh\w*|multi-?arquivo|m[oó]dulo novo|api p[uú]blica|esquema|schema)\b")
 LONG_KW = re.compile(r"(?i)\b(longa|demorada|reescrever|reimplementar|implementar do zero|feature grande)\b")
+# "9 módulos", "12 arquivos": quando o Claude não passa --files, a contagem escrita na descrição vale
+COUNT_RE = re.compile(r"(?i)\b(\d+)\s+(?:arquivos?|m[oó]dulos?|componentes?|servi[cç]os?|telas?|classes?|endpoints?|files?)\b")
 RISK_KW = re.compile(r"(?i)\b(seguran[cç]a|auth\w*|pagamento\w*|produ[cç][aã]o|deploy\w*|segredo\w*|token\w*|credencia\w+|migra[cç][aã]o de dados|apag\w+|delet\w+)")
 
 
 def classify(description, files=None):
     desc = description or ""
     n = len(files) if files else None
+    m = COUNT_RE.search(desc)
+    if m:  # a contagem escrita não pode ser reduzida por uma lista --files incompleta: vale a maior
+        n = max(n or 0, int(m.group(1)))
     reasons, score = [], None
 
     if n is not None:
@@ -57,7 +62,7 @@ def classify(description, files=None):
     incerta = score is None
     if incerta:
         score = 1  # sem sinais: assume média, mas marca como incerta
-        reasons.append("sem sinais claros de tamanho")
+        reasons.append("sem sinais claros de tamanho: conte os arquivos que a mudança toca e rode de novo com --files")
 
     risk = bool(RISK_KW.search(desc))
     if risk:

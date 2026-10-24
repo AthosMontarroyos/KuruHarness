@@ -33,7 +33,7 @@ Mudança trivial: o passo 4 basta. Senão: `git diff HEAD | bash bin/kuru review
 - `verdict: APROVADO`: diff pequeno, as regras fixas bastam. Fim.
 - `verdict: PARAR`: pare e reporte as 3 tentativas.
 - `stage: deterministic` e `REPROVADO`: corrija as `violations` e repita. Nenhum modelo foi gasto. Se vier `next: PARAR` (3ª reprovação), pare e reporte.
-- `verdict: PENDENTE`: chame o agente indicado em `agent` (`reviewer` ou `reviewer-senior`) uma vez por item de `packets`, colando o pacote INLINE no prompt; nunca passe caminho de arquivo. O revisor reprova se qualquer pacote reprovar. Registre o veredito uma vez: `bash bin/kuru review-flow record --task <id> --stage <agent> --verdict APROVADO|REPROVADO`. `next: FIM` termina; `CORRIGIR` volta ao passo 3 (o `proximo_revisor` já considera a escalada ao Opus após 2 reprovações do Haiku); `PARAR` reporta.
+- `verdict: PENDENTE`: chame o agente indicado em `agent` (`reviewer` ou `reviewer-senior`) uma vez por item de `packets`, colando o pacote INTEIRO (o campo `packet`, com as regras e o diff) INLINE no prompt, nunca um resumo (o revisor reprova entrada sem diff); nunca passe caminho de arquivo. O revisor reprova se qualquer pacote reprovar. Registre o veredito uma vez: `bash bin/kuru review-flow record --task <id> --stage <agent> --verdict APROVADO|REPROVADO`. `next: FIM` termina; `CORRIGIR` volta ao passo 3 (o `proximo_revisor` já considera a escalada ao Opus após 2 reprovações do Haiku); `PARAR` reporta.
 `--model-review` no `check` exige revisor de modelo mesmo para diff pequeno.
 
 Termine dizendo: tier, quem executou, tentativas e o veredito da revisão.
