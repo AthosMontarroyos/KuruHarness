@@ -25,6 +25,14 @@ class RouteTest(unittest.TestCase):
         self.assertEqual(route.classify("reescrever o parser do zero", ["a"])["agents"], ["cursor"])
         self.assertEqual(route.classify("mexer", [f"f{i}" for i in range(9)])["tier"], "longa")
 
+    def test_long_task_has_coder_chain_and_skips_deepseek_when_risky(self):
+        normal = route.classify("reescrever o parser do zero", ["a"])
+        self.assertEqual(normal["cadeia"], ["cursor", "deepseek", "planner", "implementer-sonnet"])
+        risky = route.classify("reescrever o parser de tokens do zero", ["a"])
+        self.assertTrue(risky["risco"])
+        self.assertNotIn("deepseek", risky["cadeia"])
+        self.assertNotIn("cadeia", route.classify("corrigir typo", ["a.md"]))
+
     def test_risk_raises_one_tier_with_floor_media(self):
         base = route.classify("corrigir typo no texto", ["a.md"])
         self.assertEqual(base["tier"], "trivial")

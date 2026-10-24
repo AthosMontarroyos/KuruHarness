@@ -10,6 +10,7 @@ FAKE_AGENT = """#!/usr/bin/env bash
 echo "$@" > "$FAKE_ARGS"
 pwd > "$FAKE_CWD"
 echo "feito pelo agent falso" > saida.txt
+[ -n "${FAKE_MSG:-}" ] && echo "$FAKE_MSG"
 exit "${FAKE_EXIT:-0}"
 """
 
@@ -89,6 +90,16 @@ class CursorTaskTest(unittest.TestCase):
         r = self.run_script("t6", "prompt.txt", env=dict(self.env, FAKE_EXIT="3"))
         self.assertEqual(r.returncode, 3)
         self.assertTrue((self.repo / ".claude/state/cursor/t6.diff").exists())
+
+    def test_limit_message_maps_to_exit_76(self):
+        r = self.run_script("t9", "prompt.txt", env=dict(self.env, FAKE_EXIT="1", FAKE_MSG="You have hit your usage limit"))
+        self.assertEqual(r.returncode, 76)
+        self.assertIn("cursor_indisponivel", r.stderr)
+
+    def test_other_failure_keeps_original_exit_code(self):
+        r = self.run_script("t10", "prompt.txt", env=dict(self.env, FAKE_EXIT="1", FAKE_MSG="erro qualquer de sintaxe"))
+        self.assertEqual(r.returncode, 1)
+        self.assertNotIn("cursor_indisponivel", r.stderr)
 
     def test_clean_removes_worktree_and_branch(self):
         self.run_script("t7", "prompt.txt")

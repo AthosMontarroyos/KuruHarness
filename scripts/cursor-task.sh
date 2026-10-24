@@ -57,4 +57,12 @@ git -C "$wt" diff --cached > "$diff"
 files=$(git -C "$wt" diff --cached --name-only | wc -l | tr -d ' ')
 echo "agent saiu com $rc | modelo $MODEL | $files arquivo(s) alterado(s)"
 echo "diff: $diff | log: $log | worktree: $wt (limpe com: scripts/cursor-task.sh --clean $id)"
-[ "$rc" -eq 0 ] || exit "$rc"
+if [ "$rc" -ne 0 ]; then
+  # Falha de infraestrutura do Cursor: o /task passa para o próximo codificador (DeepSeek, depois Sonnet).
+  # O texto exato do erro de "sem saldo" não foi observado: o padrão abaixo é um palpite só para o motivo.
+  if grep -Eiq "usage limit|rate limit|out of (credits|requests)|quota|credit|billing|upgrade|spend limit|payment|exceeded|402" "$log"; then
+    echo "cursor_indisponivel: provável falta de saldo/limite (veja $log)" >&2
+    exit 76
+  fi
+  exit "$rc"
+fi
