@@ -11,7 +11,7 @@ Você usa o Jev por API para classificar um estado em opções fechadas. A chave
 
 **Formato** (o `kuru` valida antes de gastar a chamada e explica o erro):
 - `state`: UM texto com o que será avaliado.
-- `questions`: objeto `{nome: {type, instructions, criteria?}}`, até 64 perguntas. `type` é um de:
+- `questions`: objeto `{nome: {type, instructions, criteria?}}`. `type` é um de:
   - `noul`: sim ou não; devolve a probabilidade de "sim".
   - `choice`: uma opção entre várias; `criteria` = objeto `{opção: descrição}` com 2 ou mais opções.
   - `score`: nota numa escala; `criteria` = lista ordenada com 2 ou mais níveis.

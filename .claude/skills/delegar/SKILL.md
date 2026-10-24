@@ -21,7 +21,7 @@ Peça sempre resposta curta (até 15 linhas): o que volta ao seu contexto també
 - **explorar muito** (`delegar_se`): `implementer-sonnet` com o briefing.
 - **mecânica repetida em muitos arquivos**: `implementer-haiku`.
 - **longa** (cadeia, descendo só quando o anterior estiver INDISPONÍVEL; reprovação ou teste falho não desce, conta como tentativa):
-  1. Cursor: `bash bin/kuru cursor-task <id> .kuru/<id>.prompt` (worktree isolado, `grok-4.7-high-fast`, no máximo 3 em paralelo). Saída 0: leia `.claude/state/cursor/<id>.diff`, valide com `git apply --check`, revise (passo 5) e só então `git apply`; depois `bash bin/kuru cursor-task --clean <id>`. Saída ≠ 0 (76 = provável falta de saldo ou limite, 75 = sem vaga, 127 = CLI ausente, 2 = prompt sem regras) = Cursor indisponível: avise o usuário e desça.
+  1. Cursor: `bash bin/kuru cursor-task <id> .kuru/<id>.prompt` (worktree isolado, `grok-4.7-high-fast`, no máximo 3 em paralelo). Saída 0: leia `.claude/state/cursor/<id>.diff`, valide com `git apply --check`, revise (passo 5) e só então `git apply`; depois `bash bin/kuru cursor-task --clean <id>`. Saída ≠ 0 (76 = provável falta de saldo ou limite, 75 = sem vaga, 127 = CLI ausente, 2 = argumento ou prompt inválido: sem regras, vazio ou worktree já existente) = Cursor indisponível: avise o usuário e desça. Qualquer outro código é falha do próprio `agent` e conta como tentativa, não desce.
   2. `deepseek-coder` (só sem `risco`): ele chama a API com a chave do ambiente e devolve um diff validado. Falha de chave, saldo ou limite (códigos 2, 3, 76): desça.
   3. `planner` e depois `implementer-sonnet`. Se o plano do Claude também estiver no limite, pare e reporte.
 

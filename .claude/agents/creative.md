@@ -15,7 +15,7 @@ Você é o agente de criatividade. Gera imagem e vídeo pela API da Higgsfield c
 - `bash bin/kuru higgsfield run <endpoint> --body-file <f.json> --yes [--wait 40]` envia e espera até `--wait` segundos.
 - `bash bin/kuru higgsfield status <request_id>` consulta (use se não terminou no `--wait`).
 - `bash bin/kuru higgsfield cancel <request_id>` cancela enquanto estiver na fila.
-Saída: JSON com `request_id`, `status` (`queued`, `in_progress`, `completed`, `failed`...), `images` (links) ou `video` (link). Códigos: `0` ok, `2` entrada ou chave, `3` erro do provedor, `76` sem saldo ou limite (pare e avise).
+Saída: JSON com `request_id`, `status` (`queued`, `in_progress`, `completed`, `failed`...), `images` (links) ou `video` (link). Códigos: `0` ok, `2` entrada ou chave (inclui rodar `run` sem `--yes`: nada é enviado), `3` erro do provedor, `76` sem saldo ou limite (pare e avise).
 
 **Endpoints conhecidos** (o corpo segue o schema de cada modelo; em dúvida, consulte docs.higgsfield.ai/docs/models):
 - `/higgsfield-ai/soul/v2/standard`: texto para imagem. Corpo `{"prompt": "..."}`.

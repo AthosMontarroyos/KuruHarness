@@ -24,7 +24,7 @@ COMMANDS = {
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
     if not argv or argv[0] in ("-h", "--help"):
-        print("uso: kuru <comando> [args]\ncomandos: " + ", ".join(sorted(COMMANDS)) + ", unittest")
+        print("uso: kuru <comando> [args]\ncomandos: " + ", ".join(sorted(COMMANDS)) + ", cursor-task, unittest")
         return 0 if argv else 2
     name, rest = argv[0].replace("_", "-"), argv[1:]
     if ROOT not in sys.path:

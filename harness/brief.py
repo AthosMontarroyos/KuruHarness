@@ -1,6 +1,6 @@
 """Briefing autocontido para qualquer agente que começa SEM contexto (Cursor, DeepSeek, subagents).
 
-    bash bin/kuru brief --task "..." --files a.py b.py --criteria "..." --tests "kuru unittest" --out .kuru/cursor/t1.prompt
+    bash bin/kuru brief --task "..." --files a.py b.py --criteria "..." --tests "kuru unittest" --out .kuru/t1.prompt
 
 O Cursor não lê o CLAUDE.md e subagents isolados não veem a conversa: tudo o que eles precisam saber vai
 escrito no briefing. As regras do projeto vêm da seção "## Regras para quem codifica" do CLAUDE.md

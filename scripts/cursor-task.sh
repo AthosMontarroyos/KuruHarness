@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Fase 3: roda UMA tarefa no Cursor CLI (`agent`) num git worktree isolado e devolve o diff para o
-# Claude Code revisar (/review) e aplicar. Sessão nova a cada tarefa (nunca --resume/--continue,
+# Claude Code revisar (skill delegar, passo 5) e aplicar. Sessão nova a cada tarefa (nunca --resume/--continue,
 # por causa do bug do --resume). No máximo 3 em paralelo.
 #   scripts/cursor-task.sh <task-id> <arquivo-com-o-prompt>
 #   scripts/cursor-task.sh --clean <task-id>      # remove worktree e branch depois de aplicar/descartar
@@ -60,7 +60,7 @@ files=$(git -C "$wt" diff --cached --name-only | wc -l | tr -d ' ')
 echo "agent saiu com $rc | modelo $MODEL | $files arquivo(s) alterado(s)"
 echo "diff: $diff | log: $log | worktree: $wt (limpe com: scripts/cursor-task.sh --clean $id)"
 if [ "$rc" -ne 0 ]; then
-  # Falha de infraestrutura do Cursor: o /task passa para o próximo codificador (DeepSeek, depois Sonnet).
+  # Falha de infraestrutura do Cursor: o Claude desce para o próximo codificador (skill delegar, passo 3) (DeepSeek, depois Sonnet).
   # O texto exato do erro de "sem saldo" não foi observado: o padrão abaixo é um palpite só para o motivo.
   if grep -Eiq "usage limit|rate limit|out of (credits|requests)|quota|credit|billing|upgrade|spend limit|payment|exceeded|402" "$log"; then
     echo "cursor_indisponivel: provável falta de saldo/limite (veja $log)" >&2
