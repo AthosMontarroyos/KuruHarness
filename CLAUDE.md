@@ -25,7 +25,7 @@ Delegar custa tokens (prompt do agente, briefing e resposta). Só compensa se po
 - precisar de revisão independente de mudança NÃO trivial: `reviewer` (contexto limpo);
 - precisar checar se as instruções do projeto e o código ainda batem (lê muito, 1M de contexto): `auditor`, sob demanda ou antes de fechar fase, não a cada tarefa. Chame com só a raiz e o foco (nunca a conversa) e NÃO releia o que ele leu: ele devolve só o relatório (até 25 linhas), você aplica ou descarta as propostas;
 - for decisão fechada de baixo risco: `jev-judge`; imagem ou vídeo: `creative`; reserva barata de texto: `deepseek-coder`.
-Em dúvida sobre o tamanho: `bash bin/kuru route "<tarefa>" --files ...` (grátis, sem modelo).
+**Antes de editar qualquer tarefa que toque 3+ arquivos ou tenha decisão de design, rode `bash bin/kuru route "<tarefa>" --files <todos os arquivos que a mudança toca>` (grátis, sem modelo; a lista incompleta engana o roteador) e siga o `acao` e os `agents` dele; se for `agente`, carregue a skill `delegar`.** Troca mecânica que um `sed` ou script resolve você faz direto, sem `implementer-haiku`.
 **Isolamento:** todo agente começa SEM contexto. Dê só um briefing autocontido (`bash bin/kuru brief ...`), nunca a conversa, e peça resposta curta (até 15 linhas). Cada agente já carrega o que precisa na própria definição.
 **Revisão:** mudança trivial: `bash bin/kuru check-rules` basta (o hook de fim de tarefa também roda). Não trivial: fluxo de 3 estágios da skill `delegar`; o revisor recebe só diff + regras relevantes.
 

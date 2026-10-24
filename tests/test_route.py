@@ -57,6 +57,19 @@ class RouteTest(unittest.TestCase):
         weak = route.apply_jev(r, {"choice": "complexa", "probabilities": {"complexa": 0.6}})
         self.assertEqual(weak["tier"], "media")
 
+    def test_counts_files_written_in_the_description(self):
+        r = route.classify("cache com TTL compartilhado pelos 9 módulos")
+        self.assertEqual(r["tier"], "longa")
+        self.assertIn("9 arquivo(s)", r["motivos"])
+        self.assertEqual(route.classify("ajustar 2 arquivos de config")["acao"], "direto")
+
+    def test_design_words_mean_complex(self):
+        self.assertEqual(route.classify("projete um cache com decisão de design")["tier"], "complexa")
+
+    def test_partial_files_list_does_not_hide_the_written_count(self):
+        self.assertEqual(route.classify("mexer em 20 arquivos", ["a.py"])["tier"], "longa")
+        self.assertEqual(route.classify("mexer em 2 arquivos", ["a.py", "b.py", "c.py", "d.py", "e.py"])["tier"], "complexa")
+
     def test_jev_questions_are_typed(self):
         q = route.jev_questions("x")["tier"]
         self.assertEqual(q["type"], "choice")
