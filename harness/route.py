@@ -7,7 +7,7 @@ principal ou muda a qualidade. Por isso:
   trivial  -> o próprio Claude faz, SEM agente
   media    -> o próprio Claude faz, SEM agente (delegar só se for explorar muito: ver `delegar_se`)
   complexa -> planner (Opus, contexto isolado) e depois a implementação
-  longa    -> Cursor com briefing autocontido (sem Cursor cai em planner + Sonnet).
+  longa    -> planner e depois vários implementer-sonnet em paralelo, cada um com um grupo independente de arquivos.
 Risco alto sobe um tier (nunca abaixo de `media`). Quando o sinal é fraco, devolve
 `incerta=True`: aí vale perguntar ao quick-decider (Haiku) ou ao Jev. O Jev só pode SUBIR o tier,
 nunca baixar (a confiança dele não é calibrada, ver CLAUDE.md).
@@ -22,13 +22,12 @@ AGENTS = {
     "trivial": [],
     "media": [],
     "complexa": ["planner", "implementer-sonnet"],
-    "longa": ["cursor"],  # Fase 3; se indisponível: planner + implementer-sonnet
+    "longa": ["planner", "implementer-sonnet"],  # o Sonnet em paralelo (3 a 5), um grupo de arquivos cada
 }
 DELEGATE_IF = "a tarefa exigir ler ou explorar mais de 6 arquivos, ou logs/diffs grandes que poluiriam o contexto: use implementer-sonnet com briefing"
-FALLBACK_LONGA = ["planner", "implementer-sonnet"]
-# Cadeia de codificadores da tarefa longa: Cursor -> DeepSeek (só texto, tarefa não sensível) -> Sonnet.
-# O terceiro é Sonnet e não Haiku: só chegamos nele com tarefa grande; a trivial nem usa agente.
-CHAIN_LONGA = ["cursor", "deepseek", "planner", "implementer-sonnet"]
+PARALELO_LONGA = "depois do plano, divida os arquivos em grupos independentes e rode de 3 a 5 implementer-sonnet em paralelo, cada um com o seu briefing"
+# Reserva da tarefa longa: DeepSeek (só texto, tarefa não sensível) apenas se o limite do Claude acabar.
+CHAIN_LONGA = ["planner", "implementer-sonnet", "deepseek"]
 
 TRIVIAL_KW = re.compile(r"(?i)\b(typo|erro de digita[cç][aã]o|renomear|comentario|coment[aá]rio|texto|readme|docstring|formata[cç][aã]o|lint)\b")
 COMPLEX_KW = re.compile(r"(?i)\b(arquitetura|projet(?:e|ar|ando)\b|design|decis[aã]o de design|refator\w*|migra\w*|redesenh\w*|multi-?arquivo|m[oó]dulo novo|api p[uú]blica|esquema|schema)\b")
@@ -77,6 +76,7 @@ def classify(description, files=None):
     if tier == "longa":
         # tarefa de risco alto não vai para o DeepSeek (dados sensíveis); pula direto para o Claude
         out["cadeia"] = [a for a in CHAIN_LONGA if not (risk and a == "deepseek")]
+        out["paralelo"] = PARALELO_LONGA
     return out
 
 

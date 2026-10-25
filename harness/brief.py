@@ -1,10 +1,10 @@
-"""Briefing autocontido para qualquer agente que começa SEM contexto (Cursor, DeepSeek, subagents).
+"""Briefing autocontido para qualquer agente que começa SEM contexto (subagents, DeepSeek).
 
     bash bin/kuru brief --task "..." --files a.py b.py --criteria "..." --tests "kuru unittest" --out .kuru/t1.prompt
 
-O Cursor não lê o CLAUDE.md e subagents isolados não veem a conversa: tudo o que eles precisam saber vai
+Subagents isolados não veem a conversa nem o CLAUDE.md do projeto: tudo o que eles precisam saber vai
 escrito no briefing. As regras do projeto vêm da seção "## Regras para quem codifica" do CLAUDE.md
-(uma fonte só da verdade). O marcador RULES_MARKER é o que `scripts/cursor-task.sh` exige no prompt.
+(uma fonte só da verdade). O marcador RULES_MARKER identifica o bloco de regras dentro do briefing.
 """
 import argparse
 import re

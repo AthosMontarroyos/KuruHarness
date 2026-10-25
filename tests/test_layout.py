@@ -41,7 +41,7 @@ class LayoutTest(unittest.TestCase):
             text = f.read_text(encoding="utf-8")
             self.assertNotRegex(text, r"python3 -m harness", f.name)
             self.assertNotIn("kuru-harness", text, f.name)
-            self.assertNotRegex(text, r"(?<!bin/)kuru (route|check-rules|review-flow|tasklog|cursor-task)\b", f.name)
+            self.assertNotRegex(text, r"(?<!bin/)kuru (route|check-rules|review-flow|tasklog)\b", f.name)
 
     # ---- autonomia e economia de tokens ----
     def test_every_agent_runs_isolated_without_claude_md(self):
@@ -74,7 +74,7 @@ class LayoutTest(unittest.TestCase):
         ga = (ROOT / ".gitattributes").read_text()
         self.assertIn("*.sh text eol=lf", ga)
         self.assertIn("bin/* text eol=lf", ga)
-        for f in (ROOT / "bin/kuru", ROOT / "scripts/end-of-task.sh", ROOT / "scripts/cursor-task.sh"):
+        for f in (ROOT / "bin/kuru", ROOT / "scripts/end-of-task.sh"):
             self.assertNotIn(b"\r", f.read_bytes(), f.name)  # CRLF quebraria o shebang
 
     def test_launcher_is_executable_in_git(self):

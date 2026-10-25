@@ -23,13 +23,15 @@ class RouteTest(unittest.TestCase):
         r = route.classify("refatorar o módulo de pagamentos para nova arquitetura", ["a"])
         self.assertEqual((r["tier"], r["risco"]), ("longa", True))
 
-    def test_long_task_goes_to_cursor(self):
-        self.assertEqual(route.classify("reescrever o parser do zero", ["a"])["agents"], ["cursor"])
+    def test_long_task_goes_to_planner_then_parallel_sonnet(self):
+        r = route.classify("reescrever o parser do zero", ["a"])
+        self.assertEqual(r["agents"], ["planner", "implementer-sonnet"])
+        self.assertIn("paralelo", r)
         self.assertEqual(route.classify("mexer", [f"f{i}" for i in range(9)])["tier"], "longa")
 
     def test_long_task_has_coder_chain_and_skips_deepseek_when_risky(self):
         normal = route.classify("reescrever o parser do zero", ["a"])
-        self.assertEqual(normal["cadeia"], ["cursor", "deepseek", "planner", "implementer-sonnet"])
+        self.assertEqual(normal["cadeia"], ["planner", "implementer-sonnet", "deepseek"])
         risky = route.classify("reescrever o parser de tokens do zero", ["a"])
         self.assertTrue(risky["risco"])
         self.assertNotIn("deepseek", risky["cadeia"])

@@ -6,10 +6,10 @@ Orquestrar sub-agents com custo controlado: planejar com modelo forte, revisar c
 ## Fases e critérios de pronto
 | Fase | Escopo | Pronto quando |
 |---|---|---|
-| 0 Base | `CLAUDE.md`, `SPEC.md`, `TASKS.md`; Worker `kuru-subagents` como MCP exigindo token (depois substituído por chamada direta de API com chave de ambiente, ver R.15 em `TASKS.md`); Cursor CLI (`agent`) instalado e logado | Claude Code lista as ferramentas do MCP e responde a um "ping" |
+| 0 Base | `CLAUDE.md`, `SPEC.md`, `TASKS.md`; Worker `kuru-subagents` como MCP exigindo token (depois substituído por chamada direta de API com chave de ambiente, ver R.15 em `TASKS.md`) | Claude Code lista as ferramentas do MCP e responde a um "ping" |
 | 1 Núcleo | Subagents `planner` (Opus), `reviewer` (Haiku), `quick-decider` (Haiku, esforço baixo) em `.claude/agents/`; hook de fim de tarefa (testes, linter, typecheck); limites | Uma tarefa real vai de plano a teste verde |
 | 2 Conformidade | Checagens determinísticas → `reviewer` → escalada ao Opus só após 2 reprovações; revisor vê só diff + regras relevantes | Reprova de propósito um diff que viola este `SPEC.md` |
-| 3 Cursor | `agent -p --trust` em git worktree separado, modo Agent; diff volta ao Claude Code | Tarefa longa volta como diff revisado |
+| 3 Codificação em paralelo | `planner` divide a tarefa longa em grupos independentes de arquivos; de 3 a 5 `implementer-sonnet` em paralelo; diff revisado (o Cursor CLI foi removido: integração não nativa, rodando pelo Bash) | Tarefa longa volta como diff revisado |
 | 4 Jev | Julgador rápido de decisões no meio da tarefa (inclusive porteiro de diffs antes do revisor); baixa confiança escala ao Haiku | 50–100 casos rotulados: acurácia aceitável nos casos de alta confiança |
 | 5 DeepSeek | Reserva (limite do plano estourado ou tarefa não sensível) | Patch aplicado pelo Claude Code a partir do texto devolvido |
 | 6 Medição | Log por tarefa: modelo, tokens, resultado, tentativas | Regras de roteamento ajustadas com dados |
@@ -17,8 +17,7 @@ Orquestrar sub-agents com custo controlado: planejar com modelo forte, revisar c
 ## Limites
 - Máximo 3 tentativas por tarefa.
 - Teto de custo mensal: DeepSeek US$ 5 (saldo real hoje, cuidado) e Higgsfield US$ 5. Jev sem teto: o usuário informa que não gera cobrança (AI Gateway recarregado com US$ 10). O kit não soma gasto: o limite real é o saldo pré-pago do provedor (chamada direta) e a aprovação do usuário. Ao esgotar o saldo (códigos 402/429, saída 76), o trabalho cai para o Claude (ou espera).
-- Agentes em paralelo: de 3 a 5 (Cursor: no máximo 3, ver abaixo).
-- Cursor: no máximo 3 processos em paralelo; sessão nova a cada tarefa (bug do `--resume`).
+- Agentes em paralelo: de 3 a 5.
 
 ## Regras verificáveis pelo revisor
 1. Nenhum segredo/token em arquivos versionados.
