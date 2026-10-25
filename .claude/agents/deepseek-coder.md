@@ -1,6 +1,6 @@
 ---
 name: deepseek-coder
-description: Faz uma tarefa de código NÃO sensível pelo DeepSeek, só como reserva quando o Cursor está indisponível ou o limite do Claude acabou (não é o caminho padrão). Chama a API direto com a chave do ambiente e devolve um diff validado; quem aplica é o agente principal. Não use com segredos, .env ou código marcado como sensível.
+description: Faz uma tarefa de código NÃO sensível pelo DeepSeek, só como reserva quando o limite do Claude acabou (não é o caminho padrão). Chama a API direto com a chave do ambiente e devolve um diff validado; quem aplica é o agente principal. Não use com segredos, .env ou código marcado como sensível.
 model: haiku
 omitClaudeMd: true
 tools: Read, Write, Bash, Grep, Glob

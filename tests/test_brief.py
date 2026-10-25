@@ -35,7 +35,7 @@ class BriefTest(unittest.TestCase):
         with self.assertRaises(brief.BriefError):
             brief.build("   ", rules="- r")
 
-    def test_cli_writes_out_file_and_marker_satisfies_the_cursor_guard(self):
+    def test_cli_writes_out_file_with_the_rules_marker(self):
         with tempfile.TemporaryDirectory() as d:
             out = Path(d) / "sub" / "t.prompt"
             self.assertEqual(brief.main(["--task", "x", "--out", str(out)]), 0)

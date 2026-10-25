@@ -1,6 +1,6 @@
 ---
 name: delegar
-description: Procedimento exato para delegar uma tarefa NÃO trivial a subagents ou ao Cursor (roteamento, briefing autocontido, cadeia de codificadores, revisão em 3 estágios). Use antes de delegar. Não use para tarefa trivial: nesse caso faça você mesmo, sem agente.
+description: Procedimento exato para delegar uma tarefa NÃO trivial a subagents (roteamento, briefing autocontido, cadeia de codificadores, revisão em 3 estágios). Use antes de delegar. Não use para tarefa trivial: nesse caso faça você mesmo, sem agente.
 ---
 Siga na ordem. Limite total de 3 tentativas por tarefa; na terceira falha, pare e reporte.
 
@@ -13,17 +13,14 @@ Siga na ordem. Limite total de 3 tentativas por tarefa; na terceira falha, pare 
 ## 2. Briefing autocontido
 O agente começa sem contexto: nunca cole a conversa. Gere o briefing:
 `bash bin/kuru brief --task "<o que fazer>" --files <arquivos> --criteria "<critério de pronto>" --tests "<comando de teste>" --out .kuru/<tarefa>.prompt`
-Ele inclui as regras do projeto por extenso. Para um subagent, passe o texto do briefing como prompt; para o Cursor, o arquivo.
+Ele inclui as regras do projeto por extenso. Passe o texto do briefing como prompt do subagent.
 Peça sempre resposta curta (até 15 linhas): o que volta ao seu contexto também custa token.
 
 ## 3. Execute
 - **complexa**: chame `planner` com o briefing e peça um plano de até 25 linhas; depois implemente você mesmo ou com `implementer-sonnet` (briefing + plano).
 - **explorar muito** (`delegar_se`): `implementer-sonnet` com o briefing.
 - **mecânica repetida em muitos arquivos**: `implementer-haiku`.
-- **longa** (cadeia, descendo só quando o anterior estiver INDISPONÍVEL; reprovação ou teste falho não desce, conta como tentativa):
-  1. Cursor: `bash bin/kuru cursor-task <id> .kuru/<id>.prompt` (worktree isolado, `grok-4.7-high-fast`, no máximo 3 em paralelo). Saída 0: leia `.claude/state/cursor/<id>.diff`, valide com `git apply --check`, revise (passo 5) e só então `git apply`; depois `bash bin/kuru cursor-task --clean <id>`. Saída ≠ 0 (76 = provável falta de saldo ou limite, 75 = sem vaga, 127 = CLI ausente) = Cursor indisponível: avise o usuário e desça. Código 2 = argumento ou prompt inválido (sem regras, vazio ou worktree já existente): corrija o briefing ou rode `--clean`, e conta como tentativa. Qualquer outro código é falha do próprio `agent`: leia o log; se for login ou autenticação ausente, é indisponível e você desce; senão conta como tentativa. Depois de qualquer falha, rode `bash bin/kuru cursor-task --clean <id>` antes de tentar de novo (worktree existente sai com 2).
-  2. `deepseek-coder` (só sem `risco`): ele chama a API com a chave do ambiente e devolve um diff validado. Falha de chave, saldo ou limite (códigos 2, 3, 76): desça. Código 4 (sem diff válido) conta como tentativa, não desce.
-  3. `planner` e depois `implementer-sonnet`. Se o plano do Claude também estiver no limite, pare e reporte.
+- **longa**: `planner` com o briefing (plano de até 25 linhas, já separando os arquivos em grupos independentes). Depois rode de 3 a 5 `implementer-sonnet` em paralelo, UMA chamada por grupo na mesma resposta, cada um com o seu briefing (só os arquivos do grupo + o trecho do plano) e sem se sobrepor nos arquivos. Reserva: se o limite do Claude acabar e a tarefa não tiver `risco`, `deepseek-coder` (ele chama a API com a chave do ambiente e devolve um diff validado; falha de chave, saldo ou limite, códigos 2, 3, 76, ou código 4 sem diff válido conta como tentativa). Se nada estiver disponível, pare e reporte.
 
 ## 4. Verifique
 `bash bin/kuru check-rules` e a suíte de testes do projeto. Falhou: corrija (conta como tentativa).

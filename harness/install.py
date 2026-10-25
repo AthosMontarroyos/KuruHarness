@@ -119,6 +119,22 @@ def install(dest, dry_run=False, force=False):
                 target.write_text(data, encoding="utf-8", newline="\n")
             else:
                 shutil.copy2(src, target)
+    # arquivos que o kit instalou antes e não existem mais nele (ex.: cursor-task.sh): apaga se você não mexeu
+    report["removidos"] = []
+    for rel, digest in manifest.items():
+        if rel.startswith("_") or rel in new_manifest:
+            continue
+        old = dest / rel
+        try:
+            unchanged = old.exists() and sha(old.read_text(encoding="utf-8")) == digest
+        except (OSError, UnicodeDecodeError):
+            unchanged = False
+        if unchanged:
+            report["removidos"].append(rel)
+            if not dry_run:
+                old.unlink()
+        elif old.exists():
+            new_manifest[rel] = digest  # alterado por você: fica, e continua listado
     claude_md = dest / "CLAUDE.md"
     block = policy_block((ROOT / "CLAUDE.md").read_text(encoding="utf-8"), cmd)
     old_md = claude_md.read_text(encoding="utf-8") if claude_md.exists() else ""

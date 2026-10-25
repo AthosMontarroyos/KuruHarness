@@ -2,7 +2,6 @@
 # Executa o kit com o Python que existir na máquina. No Windows `python3` costuma ser só um atalho
 # da Microsoft Store que não roda nada: por isso cada candidato é testado de verdade antes de usar.
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-[ "${1:-}" = "cursor-task" ] && { shift; exec bash "$here/../scripts/cursor-task.sh" "$@"; }
 # Windows: console e arquivos em UTF-8, senão acento e travessão podem quebrar a saída
 export PYTHONUTF8=1 PYTHONIOENCODING=utf-8
 py=""

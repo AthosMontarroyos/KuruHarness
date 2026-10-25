@@ -69,6 +69,25 @@ class InstallTest(unittest.TestCase):
         install.install(self.dest, force=True)
         self.assertNotEqual(mine.read_text(encoding="utf-8"), "meu planner\n")
 
+    def test_files_the_kit_no_longer_ships_are_removed_unless_edited(self):
+        install.install(self.dest)
+        gone, edited = self.dest / "kuru/scripts/velho.sh", self.dest / "agents/velho.md"
+        gone.write_text("x", encoding="utf-8")
+        edited.write_text("y", encoding="utf-8")
+        manifest = json.loads((self.dest / "kuru/.manifest.json").read_text(encoding="utf-8"))
+        manifest["kuru/scripts/velho.sh"] = install.sha("x")
+        manifest["agents/velho.md"] = install.sha("original")
+        (self.dest / "kuru/.manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+        rep = install.install(self.dest)
+        self.assertEqual(rep["removidos"], ["kuru/scripts/velho.sh"])
+        self.assertFalse(gone.exists())
+        self.assertTrue(edited.exists())
+
+    def test_global_block_has_no_cursor(self):
+        install.install(self.dest)
+        self.assertNotIn("Cursor", (self.dest / "CLAUDE.md").read_text(encoding="utf-8"))
+        self.assertFalse((self.dest / "kuru/scripts/cursor-task.sh").exists())
+
     def test_dry_run_writes_nothing(self):
         install.install(self.dest, dry_run=True)
         self.assertFalse((self.dest / "agents").exists())

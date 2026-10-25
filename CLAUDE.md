@@ -12,7 +12,7 @@ O kit mora em `.claude/` (agents e skills), `harness/`, `bin/kuru` (launcher que
 - Chaves e tokens só em variável de ambiente, nunca em arquivo.
 - Commits coesos por intenção, em português, sem push forçado nem reescrita de histórico.
 - Teto de US$ 5/mês em DeepSeek e Higgsfield. O kit NÃO soma gasto: o limite real é o saldo pré-pago na conta do provedor e a aprovação do usuário a cada geração. Jev sem teto, mas sem loops.
-- Agentes em paralelo: de 3 a 5 (Cursor: no máximo 3).
+- Agentes em paralelo: de 3 a 5.
 
 ## Autonomia: quando delegar
 Delegar custa tokens (prompt do agente, briefing e resposta). Só compensa se poupar o seu contexto ou melhorar a qualidade.
@@ -21,7 +21,7 @@ Delegar custa tokens (prompt do agente, briefing e resposta). Só compensa se po
 - for ler ou explorar mais de 6 arquivos, logs ou diffs grandes: `implementer-sonnet` (poupa o seu contexto);
 - for a mesma mudança mecânica repetida em muitos arquivos, sem decisão: `implementer-haiku`;
 - a tarefa for complexa ou de arquitetura (multi-arquivo): `planner` antes de codar;
-- a tarefa for longa (8+ arquivos, reescrita): Cursor, com briefing (seção abaixo);
+- a tarefa for longa (8+ arquivos, reescrita): `planner` e depois de 3 a 5 `implementer-sonnet` em paralelo, cada um com um grupo independente de arquivos e o seu briefing;
 - precisar de revisão independente de mudança NÃO trivial: `reviewer` (contexto limpo);
 - precisar checar se as instruções do projeto e o código ainda batem (lê muito, 1M de contexto): `auditor`, sob demanda ou antes de fechar fase, não a cada tarefa. Chame com só a raiz e o foco (nunca a conversa) e NÃO releia o que ele leu: ele devolve só o relatório (até 25 linhas), você aplica ou descarta as propostas;
 - for decisão fechada de baixo risco: `jev-judge`; imagem ou vídeo: `creative`; reserva barata de texto: `deepseek-coder`.
@@ -29,13 +29,10 @@ Delegar custa tokens (prompt do agente, briefing e resposta). Só compensa se po
 **Isolamento:** todo agente começa SEM contexto. Dê só um briefing autocontido (`bash bin/kuru brief ...`), nunca a conversa, e peça resposta curta (até 15 linhas). Cada agente já carrega o que precisa na própria definição.
 **Revisão:** mudança trivial: `bash bin/kuru check-rules` basta (o hook de fim de tarefa também roda). Não trivial: fluxo de 3 estágios da skill `delegar`; o revisor recebe só diff + regras relevantes.
 
-## Cursor (não lê este arquivo)
-O Cursor NÃO recebe o `CLAUDE.md` nem nenhuma instrução do projeto: tudo vai escrito no prompt. Gere sempre com `bash bin/kuru brief --task ... --files ... --criteria ... --tests ... --out .kuru/<id>.prompt`; o `bash bin/kuru cursor-task` recusa prompt sem as regras. Modelo padrão `grok-4.7-high-fast` (`CURSOR_MODEL` sobrescreve). Se o Cursor estiver indisponível (sem saldo, CLI ausente; deslogado aparece no log, veja a skill): DeepSeek (tarefa sem risco alto) e depois Sonnet. Aplique o diff só depois de revisar.
-
 ## Provedores e chaves
-Variáveis de ambiente: `DEEPSEEK_API_KEY` (DeepSeek, OpenRouter `sk-or-` ou Workers AI com `CLOUDFLARE_ACCOUNT_ID`), `JEV_API_KEY` (Workers AI), `HIGGSFIELD_API_KEY` (só gera com `--yes` e com a aprovação do usuário). O Cursor NÃO usa chave: usa o login do terminal (`agent login`, uma vez); `CURSOR_API_KEY` só serve onde não dá para logar. Conferir sem gastar: `bash bin/kuru ask-deepseek --dry-run`. O Jev erra com confiança alta (87,5% de acerto contra 97,5% do Haiku): é indício, nunca prova, e não serve de porteiro de diffs. Os formatos completos estão nas definições de `jev-judge`, `creative` e `deepseek-coder` e em `bash bin/kuru ask-jev --example`.
+Variáveis de ambiente: `DEEPSEEK_API_KEY` (DeepSeek, OpenRouter `sk-or-` ou Workers AI com `CLOUDFLARE_ACCOUNT_ID`), `JEV_API_KEY` (Workers AI), `HIGGSFIELD_API_KEY` (só gera com `--yes` e com a aprovação do usuário). Conferir sem gastar: `bash bin/kuru ask-deepseek --dry-run`. O Jev erra com confiança alta (87,5% de acerto contra 97,5% do Haiku): é indício, nunca prova, e não serve de porteiro de diffs. Os formatos completos estão nas definições de `jev-judge`, `creative` e `deepseek-coder` e em `bash bin/kuru ask-jev --example`.
 
-## Regras para quem codifica (entram por extenso no briefing de qualquer agente, inclusive o Cursor)
+## Regras para quem codifica (entram por extenso no briefing de qualquer agente)
 - Siga o estilo do código ao redor: nomes, idioma e densidade de comentários do arquivo. Comentários, mensagens e documentação em português, a menos que o arquivo já use outro idioma.
 - Faça a menor mudança que cumpre a tarefa. Não refatore nem renomeie o que não foi pedido.
 - Se o projeto tem testes, escreva ou atualize os testes junto e rode a suíte antes de terminar.
