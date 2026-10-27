@@ -8,6 +8,14 @@ Kit de subagents para o **Claude Code**. O Claude decide **sozinho** quando dele
 - **Isolamento:** todo agente começa sem contexto e recebe só um briefing autocontido (`bash bin/kuru brief`), nunca a conversa. Cada um roda com `omitClaudeMd` e carrega o que precisa na própria definição.
 - **Revisão:** diff pequeno (1 arquivo, até 20 linhas alteradas, somando `+` e `-`) passa só pelas regras fixas, sem gastar modelo.
 
+## Cursor + Claude (em paralelo)
+A divisão é por **quem mexe em quê**, não por quem chama quem: você programa na IDE (Cursor, que lê as mesmas skills de `.claude/`) e, ao mesmo tempo, o Claude Code roda tarefas longas. O Claude **não chama o Cursor** (essa integração pelo Bash foi removida); os dois só compartilham o repositório.
+- **A árvore principal é sua.** Antes de editar nela, o Claude confere `git status --short` e não toca em arquivo sujo que não é dele; nunca usa `stash`, `reset`, `checkout --`, `clean`, `add -A` nem `commit -a` ali.
+- **Tarefa longa vai para um worktree isolado:** `bash bin/kuru worktree create <id>` cria `.kuru/worktrees/<id>` na branch `kuru/<id>` (index e arquivos próprios, sem conflito com a IDE). Ele nasce do **último commit**: o que você ainda não commitou não entra nele. O `planner` e os `implementer-sonnet` em paralelo trabalham só lá (o briefing leva `--workdir`).
+- **Entrega = branch.** Quando a revisão aprova, o Claude commita no worktree e te passa `git merge kuru/<id>`. Quem mescla é você (ou ele, se você pedir). `bash bin/kuru worktree status` lista o que está pendente; `bash bin/kuru worktree remove <id>` recusa apagar trabalho sujo ou não mesclado (`--force` descarta).
+- **O hook de fim de tarefa** confere o worktree ativo, então uma edição quebrada sua na IDE não reprova o Claude.
+- **Limites:** só um worktree ativo por vez; o Cursor não roda o hook nem os subagents deste kit, então o que você escreve na IDE só passa pelas checagens se você rodar `bash bin/kuru check-rules` (ou pedir ao Claude para revisar o diff). A skill `delegar` avisa que só o Claude Code a executa. Não verificado: comportamento no Windows e no Cursor de verdade; testado só com git no Linux.
+
 ## Agentes
 | Agente | Modelo | Quando |
 |---|---|---|
@@ -45,6 +53,6 @@ Este repositório é o **harness**, não um projeto que o usa: ele existe para s
 Requisitos: Python 3 (o `bin/kuru` testa `python3`, `python` e `py` e ignora o atalho quebrado da Microsoft Store no Windows) e Git; sem Python o `bin/kuru` sai com 127; comando desconhecido ou sem argumento sai com 2. No Windows, o Claude Code roda os comandos pelo Git Bash.
 
 ## Mapa
-`.claude/agents/` e `.claude/skills/` (o kit), `.claude/settings.json` (hook e permissões), `harness/` e `bin/kuru` (roteador, briefing, revisão, regras, log de tarefas `tasklog`, chamadas de API), `scripts/` (hook de fim de tarefa), `CLAUDE.md`/`SPEC.md`/`TASKS.md` (regras, especificação e ledger), `tests/` (`python -m unittest discover -s tests -t .`).
+`.claude/agents/` e `.claude/skills/` (o kit), `.claude/settings.json` (hook e permissões), `harness/` e `bin/kuru` (roteador, briefing, revisão, regras, worktree isolado, log de tarefas `tasklog`, chamadas de API), `scripts/` (hook de fim de tarefa), `CLAUDE.md`/`SPEC.md`/`TASKS.md` (regras, especificação e ledger), `tests/` (`python -m unittest discover -s tests -t .`).
 
 Já foi plugin (PR #5) e saiu: exigia prefixo em tudo e não carregava o `CLAUDE.md`. Está no histórico do git.
