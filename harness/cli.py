@@ -15,8 +15,7 @@ COMMANDS = {
     "tasklog": "harness.tasklog",
     "hooklog": "harness.hooklog",
     "brief": "harness.brief",
-    "ask-deepseek": "harness.llm:deepseek_main",   # "módulo:função" quando não é `main`
-    "ask-jev": "harness.llm:jev_main",
+    "ask-jev": "harness.llm:jev_main",   # "módulo:função" quando não é `main`
     "higgsfield": "harness.higgsfield",
     "install": "harness.install",
     "worktree": "harness.worktree",

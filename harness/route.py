@@ -26,8 +26,6 @@ AGENTS = {
 }
 DELEGATE_IF = "a tarefa exigir ler ou explorar mais de 6 arquivos, ou logs/diffs grandes que poluiriam o contexto: use implementer-sonnet com briefing"
 PARALELO_LONGA = "depois do plano, divida os arquivos em grupos independentes e rode de 3 a 5 implementer-sonnet em paralelo, cada um com o seu briefing"
-# Reserva da tarefa longa: DeepSeek (só texto, tarefa não sensível) apenas se o limite do Claude acabar.
-CHAIN_LONGA = ["planner", "implementer-sonnet", "deepseek"]
 
 TRIVIAL_KW = re.compile(r"(?i)\b(typo|erro de digita[cç][aã]o|renomear|comentario|coment[aá]rio|texto|readme|docstring|formata[cç][aã]o|lint)\b")
 COMPLEX_KW = re.compile(r"(?i)\b(arquitetura|projet(?:e|ar|ando)\b|design|decis[aã]o de design|refator\w*|migra\w*|redesenh\w*|multi-?arquivo|m[oó]dulo novo|api p[uú]blica|esquema|schema)\b")
@@ -74,8 +72,7 @@ def classify(description, files=None):
     if tier == "media":
         out["delegar_se"] = DELEGATE_IF
     if tier == "longa":
-        # tarefa de risco alto não vai para o DeepSeek (dados sensíveis); pula direto para o Claude
-        out["cadeia"] = [a for a in CHAIN_LONGA if not (risk and a == "deepseek")]
+        out["cadeia"] = AGENTS[tier]
         out["paralelo"] = PARALELO_LONGA
     return out
 

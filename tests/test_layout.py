@@ -70,6 +70,13 @@ class LayoutTest(unittest.TestCase):
         for f in (ROOT / "CLAUDE.md", ROOT / "README.md", *(ROOT / ".claude/skills").glob("*/SKILL.md"), *(ROOT / ".claude/agents").glob("*.md")):
             self.assertNotRegex(f.read_text(encoding="utf-8"), r"(?<![\w/])/(task|review|fallback)\b", f.name)
 
+    def test_deepseek_is_gone_and_jev_is_the_only_auxiliary_model(self):
+        self.assertFalse((ROOT / ".claude/agents/deepseek-coder.md").exists())
+        for f in (ROOT / "CLAUDE.md", ROOT / "README.md", *(ROOT / ".claude/skills").glob("*/SKILL.md"), *(ROOT / ".claude/agents").glob("*.md")):
+            self.assertNotRegex(f.read_text(encoding="utf-8"), r"(?i)deepseek|deep_seek", f.name)
+        r = subprocess.run(["bash", str(ROOT / "bin/kuru"), "ask-deepseek"], capture_output=True, text=True)
+        self.assertEqual(r.returncode, 2)  # comando desconhecido
+
     def test_windows_safe_line_endings_configured(self):
         ga = (ROOT / ".gitattributes").read_text()
         self.assertIn("*.sh text eol=lf", ga)

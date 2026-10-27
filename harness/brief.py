@@ -1,4 +1,4 @@
-"""Briefing autocontido para qualquer agente que começa SEM contexto (subagents, DeepSeek).
+"""Briefing autocontido para qualquer agente que começa SEM contexto (subagents).
 
     bash bin/kuru brief --task "..." --files a.py b.py --criteria "..." --tests "kuru unittest" --out .kuru/t1.prompt
 

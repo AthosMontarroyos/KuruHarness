@@ -11,12 +11,12 @@ Orquestrar sub-agents com custo controlado: planejar com modelo forte, revisar c
 | 2 Conformidade | Checagens determinísticas → `reviewer` → escalada ao Opus só após 2 reprovações; revisor vê só diff + regras relevantes | Reprova de propósito um diff que viola este `SPEC.md` |
 | 3 Codificação em paralelo | `planner` divide a tarefa longa em grupos independentes de arquivos; de 3 a 5 `implementer-sonnet` em paralelo; diff revisado; roda em worktree isolado (`kuru worktree`) para não colidir com a edição do usuário na IDE (Cursor). O Cursor CLI chamado pelo Bash foi removido: Cursor e Claude só compartilham o repositório | Tarefa longa volta como branch `kuru/<id>` com diff revisado, sem tocar na árvore principal |
 | 4 Jev | Julgador rápido de decisões no meio da tarefa (inclusive porteiro de diffs antes do revisor); baixa confiança escala ao Haiku | 50–100 casos rotulados: acurácia aceitável nos casos de alta confiança |
-| 5 DeepSeek | Reserva (limite do plano estourado ou tarefa não sensível) | Patch aplicado pelo Claude Code a partir do texto devolvido |
+| 5 DeepSeek | REMOVIDA a pedido do usuário: o único modelo auxiliar é o Jev. Se o limite do Claude acabar, o trabalho para e é reportado | (histórico: R.15 e R.25 em `TASKS.md`) |
 | 6 Medição | Log por tarefa: modelo, tokens, resultado, tentativas | Regras de roteamento ajustadas com dados |
 
 ## Limites
 - Máximo 3 tentativas por tarefa.
-- Teto de custo mensal: DeepSeek US$ 5 (saldo real hoje, cuidado) e Higgsfield US$ 5. Jev sem teto: o usuário informa que não gera cobrança (AI Gateway recarregado com US$ 10). O kit não soma gasto: o limite real é o saldo pré-pago do provedor (chamada direta) e a aprovação do usuário. Ao esgotar o saldo (códigos 402/429, saída 76), o trabalho cai para o Claude (ou espera).
+- Teto de custo mensal: Higgsfield US$ 5. Jev sem teto: o usuário informa que não gera cobrança (AI Gateway recarregado com US$ 10). O kit não soma gasto: o limite real é o saldo pré-pago do provedor (chamada direta) e a aprovação do usuário. Ao esgotar o saldo (códigos 402/429, saída 76), o trabalho espera ou é reportado.
 - Agentes em paralelo: de 3 a 5.
 
 ## Regras verificáveis pelo revisor
@@ -25,4 +25,4 @@ Orquestrar sub-agents com custo controlado: planejar com modelo forte, revisar c
 3. O revisor nunca recebe o projeto inteiro, só diff + regras.
 4. Nenhuma fase é marcada concluída em `TASKS.md` sem o critério de pronto registrado.
 5. Máximo de 3 tentativas por tarefa respeitado.
-6. DeepSeek e Higgsfield: teto de US$ 5 cada, garantido pelo saldo pré-pago e pela aprovação do usuário (o kit não soma gasto).
+6. Higgsfield: teto de US$ 5, garantido pelo saldo pré-pago e pela aprovação do usuário (o kit não soma gasto).

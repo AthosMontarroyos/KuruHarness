@@ -1,31 +1,21 @@
-"""Chamadas diretas por API, sem MCP, sem plugin e sem comandos: DeepSeek e Jev.
+"""Chamada direta por API ao Jev (Workers AI), sem MCP, sem plugin e sem comandos.
 
-A chave vem de variável de ambiente e pode ser de provedores diferentes:
-  DEEPSEEK_API_KEY (ou DEEP_SEEK_API_KEY): chave do DeepSeek, do OpenRouter (sk-or-...) ou do Workers AI.
+A chave vem de variável de ambiente:
   JEV_API_KEY: chave do Workers AI (o Jev estruturado, `typesafe/jev`, só existe lá).
-  CLOUDFLARE_ACCOUNT_ID: obrigatório quando a chave é do Workers AI.
-Opcionais: *_PROVIDER (deepseek | openrouter | workers-ai), *_BASE_URL, *_MODEL.
+  CLOUDFLARE_ACCOUNT_ID: id da conta Cloudflare.
+Opcionais: JEV_PROVIDER (só workers-ai), JEV_BASE_URL, JEV_MODEL.
 
-Saídas: 0 ok | 2 configuração/entrada inválida | 3 erro do provedor | 4 resposta sem diff válido | 76 saldo ou limite esgotado.
+Saídas: 0 ok | 2 configuração/entrada inválida | 3 erro do provedor | 76 saldo ou limite esgotado.
 A chave nunca é impressa.
 """
 import argparse
 import json
 import os
-import re
-import subprocess
 import sys
 import urllib.error
 import urllib.request
 
-DEEPSEEK_KEYS = ("DEEPSEEK_API_KEY", "DEEP_SEEK_API_KEY")
 ACCOUNT_KEYS = ("CLOUDFLARE_ACCOUNT_ID", "CF_ACCOUNT_ID")
-PROVIDERS = ("deepseek", "openrouter", "workers-ai")
-DEFAULT_MODEL = {
-    "deepseek": "deepseek-chat",
-    "openrouter": "deepseek/deepseek-v3.2",
-    "workers-ai": "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b",  # roda no plano gratuito; o v4 exige plano pago
-}
 JEV_TYPES = ("noul", "choice", "score")
 JEV_EXAMPLE = {
     "state": "Checkout fora do ar há 1 hora para todos os clientes.",
@@ -55,40 +45,11 @@ def first_env(names, env):
     return ""
 
 
-def detect_provider(key, explicit=""):
-    explicit = (explicit or "").strip().lower().replace("_", "-")
-    if explicit:
-        if explicit not in PROVIDERS:
-            raise ConfigError(f"provedor desconhecido: {explicit} (use {', '.join(PROVIDERS)})")
-        return explicit
-    if key.startswith("sk-or-"):
-        return "openrouter"
-    if key.startswith("sk-"):
-        return "deepseek"
-    return "workers-ai"  # tokens da Cloudflare não têm prefixo fixo
-
-
 def _account(env):
     acct = first_env(ACCOUNT_KEYS, env)
     if not acct:
         raise ConfigError("chave do Workers AI exige CLOUDFLARE_ACCOUNT_ID (o id da conta Cloudflare)")
     return acct
-
-
-def resolve_deepseek(env=None):
-    env = os.environ if env is None else env
-    key = first_env(DEEPSEEK_KEYS, env)
-    if not key:
-        raise ConfigError("defina DEEPSEEK_API_KEY (chave do DeepSeek, do OpenRouter ou do Workers AI)")
-    provider = detect_provider(key, env.get("DEEPSEEK_PROVIDER", ""))
-    base = (env.get("DEEPSEEK_BASE_URL") or "").rstrip("/")
-    if not base:
-        if provider == "workers-ai":  # só este provedor precisa do id da conta
-            base = f"https://api.cloudflare.com/client/v4/accounts/{_account(env)}/ai/v1"
-        else:
-            base = {"deepseek": "https://api.deepseek.com", "openrouter": "https://openrouter.ai/api/v1"}[provider]
-    model = (env.get("DEEPSEEK_MODEL") or "").strip() or DEFAULT_MODEL[provider]
-    return {"provider": provider, "url": base + "/chat/completions", "model": model, "key": key}
 
 
 def resolve_jev(env=None):
@@ -148,21 +109,6 @@ def http_json(url, key, payload, scheme="Bearer", timeout=None):
         raise ProviderError("resposta do provedor não é JSON")
 
 
-def ask_deepseek(prompt, system="", max_tokens=None, env=None):
-    cfg = resolve_deepseek(env)
-    messages = ([{"role": "system", "content": system}] if system else []) + [{"role": "user", "content": prompt}]
-    payload = {"model": cfg["model"], "messages": messages, "stream": False}
-    if max_tokens:
-        payload["max_tokens"] = max_tokens
-    data = http_json(cfg["url"], cfg["key"], payload)
-    try:
-        text = data["choices"][0]["message"]["content"] or ""
-    except (KeyError, IndexError, TypeError):
-        raise ProviderError(f"resposta sem choices[0].message.content: {json.dumps(data)[:300]}")
-    text = re.sub(r"<think>.*?</think>\s*", "", text, flags=re.S)  # modelos de raciocínio devolvem o pensamento
-    return text.strip(), data.get("usage") or {}, cfg
-
-
 def ask_jev(state, questions, env=None):
     validate_jev_input(state, questions)
     cfg = resolve_jev(env)
@@ -172,32 +118,6 @@ def ask_jev(state, questions, env=None):
     return data.get("result", data), cfg
 
 
-def extract_diff(text):
-    """Pega o primeiro bloco ```diff (ou o texto inteiro, se já for um diff) que tenha cabeçalho ---/+++."""
-    for m in re.finditer(r"```(?:diff|patch)?[ \t]*\n(.*?)\n?```", text, re.S):
-        block = m.group(1)
-        if re.search(r"(?m)^--- ", block) and re.search(r"(?m)^\+\+\+ ", block):
-            return block.strip("\n") + "\n"
-    if re.match(r"\s*(diff --git|--- )", text) and re.search(r"(?m)^\+\+\+ ", text):
-        return text.strip("\n") + "\n"
-    return ""
-
-
-def git_apply_check(path):
-    """(ok, mensagem) de `git apply --check`: valida que o diff aplica, sem aplicar."""
-    try:
-        r = subprocess.run(["git", "apply", "--check", path], capture_output=True, text=True, timeout=60)
-    except (OSError, subprocess.SubprocessError) as e:
-        return False, f"não consegui rodar git: {e}"
-    return r.returncode == 0, (r.stderr or r.stdout).strip()
-
-
-def _write(path, text):
-    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
-    with open(path, "w", encoding="utf-8", newline="\n") as f:
-        f.write(text)
-
-
 def _public(cfg):
     return {"provider": cfg["provider"], "url": cfg["url"], "model": cfg["model"], "key": f"definida ({len(cfg['key'])} caracteres)"}
 
@@ -205,50 +125,6 @@ def _public(cfg):
 def _fail(e):
     print(f"erro: {e}", file=sys.stderr)
     return e.code if isinstance(e, ProviderError) else 2
-
-
-def deepseek_main(argv=None):
-    p = argparse.ArgumentParser(prog="kuru ask-deepseek", description="Pergunta ao DeepSeek (qualquer provedor) e imprime a resposta.")
-    g = p.add_mutually_exclusive_group()
-    g.add_argument("--prompt")
-    g.add_argument("--prompt-file")
-    p.add_argument("--system", default="")
-    p.add_argument("--max-tokens", type=int)
-    p.add_argument("--out", help="grava a resposta neste arquivo em vez de imprimir")
-    p.add_argument("--diff-out", help="extrai o bloco ```diff da resposta para este arquivo e valida com git apply --check")
-    p.add_argument("--dry-run", action="store_true", help="mostra provedor, URL e modelo sem chamar")
-    a = p.parse_args(argv)
-    try:
-        if a.dry_run:
-            print(json.dumps(_public(resolve_deepseek()), ensure_ascii=False))
-            return 0
-        prompt = a.prompt if a.prompt is not None else (open(a.prompt_file, encoding="utf-8").read() if a.prompt_file else sys.stdin.read())
-        if not prompt.strip():
-            raise ConfigError("prompt vazio (use --prompt, --prompt-file ou stdin)")
-        text, usage, cfg = ask_deepseek(prompt, a.system, a.max_tokens)
-    except (ConfigError, ProviderError, OSError) as e:
-        return _fail(e)
-    meta = {"provedor": cfg["provider"], "modelo": cfg["model"], "uso": usage}
-    try:
-        if a.out:
-            _write(a.out, text + "\n")
-        if a.diff_out:
-            diff = extract_diff(text)
-            if not diff:
-                print("erro: a resposta não traz um diff unificado (bloco ```diff com --- e +++)", file=sys.stderr)
-                return 4
-            _write(a.diff_out, diff)
-            ok, msg = git_apply_check(a.diff_out)
-            print(json.dumps({**meta, "diff": a.diff_out, "git_apply_check": "ok" if ok else msg[:300]}, ensure_ascii=False))
-            return 0 if ok else 4
-    except OSError as e:
-        return _fail(e)
-    if a.out:
-        print(json.dumps({**meta, "saida": a.out}, ensure_ascii=False))
-    else:
-        print(text)
-        print(f"[{cfg['provider']} · {cfg['model']} · {usage}]", file=sys.stderr)
-    return 0
 
 
 def jev_main(argv=None):
@@ -283,4 +159,4 @@ def jev_main(argv=None):
 
 
 if __name__ == "__main__":
-    sys.exit(deepseek_main())
+    sys.exit(jev_main())

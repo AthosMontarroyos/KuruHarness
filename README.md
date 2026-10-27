@@ -25,21 +25,19 @@ A divisão é por **quem mexe em quê**, não por quem chama quem: você program
 | `reviewer` / `reviewer-senior` | Haiku / Opus | revisão de mudança não trivial (só diff + regras) |
 | `quick-decider` | Haiku | dúvida de uma frase |
 | `auditor` | Haiku 5.5 (1M nativo) | confere instruções do projeto contra o código e propõe o que mudar (só leitura) |
-| `deepseek-coder` | Haiku | reserva barata, só texto (chave de ambiente) |
 | `jev-judge` | Haiku | triagem de baixo risco por probabilidades (chave de ambiente) |
 | `creative` | Sonnet | imagem e vídeo pela Higgsfield (chave de ambiente, gasta crédito) |
 
 ## Chaves (variáveis de ambiente)
 | Variável | Para quê | Observação |
 |---|---|---|
-| `DEEPSEEK_API_KEY` (ou `DEEP_SEEK_API_KEY`) | `deepseek-coder` | chave do DeepSeek, do OpenRouter (`sk-or-...`) ou do Workers AI; o provedor é detectado pelo formato |
 | `JEV_API_KEY` | `jev-judge` | chave do Workers AI (o Jev estruturado só existe lá) |
-| `CLOUDFLARE_ACCOUNT_ID` | Workers AI | necessário quando alguma chave for do Workers AI |
+| `CLOUDFLARE_ACCOUNT_ID` | Workers AI | id da conta Cloudflare, necessário para o Jev |
 | `HIGGSFIELD_API_KEY` | `creative` | cada geração gasta crédito e só roda com aprovação do usuário |
 
-Para trocar provedor ou modelo: `DEEPSEEK_PROVIDER`, `DEEPSEEK_BASE_URL`, `DEEPSEEK_MODEL`, `JEV_PROVIDER` (só `workers-ai`), `JEV_BASE_URL`, `JEV_MODEL`. Para conferir sem gastar: `bash bin/kuru ask-deepseek --dry-run`, `bash bin/kuru ask-jev --dry-run`.
+Para trocar o modelo ou a URL: `JEV_PROVIDER` (só `workers-ai`), `JEV_BASE_URL`, `JEV_MODEL`. Para conferir sem gastar: `bash bin/kuru ask-jev --dry-run`.
 
-**No Claude Code na nuvem**: menu do ambiente na barra de título da sessão → *Edit* → *Network secrets* (ou variável de ambiente, se a seção não aparecer). Uma sessão nova já enxerga. Nunca cole uma chave no chat. Em *Network access*, libere `api.deepseek.com`, `openrouter.ai`, `api.cloudflare.com` e `api.higgsfield.ai`.
+**No Claude Code na nuvem**: menu do ambiente na barra de título da sessão → *Edit* → *Network secrets* (ou variável de ambiente, se a seção não aparecer). Uma sessão nova já enxerga. Nunca cole uma chave no chat. Em *Network access*, libere `api.cloudflare.com` e `api.higgsfield.ai`.
 
 ## Usar
 Este repositório é o **harness**, não um projeto que o usa: ele existe para ser instalado **uma vez, globalmente**, e valer em todos os seus projetos. Nunca se copia para dentro de outro projeto.

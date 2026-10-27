@@ -9,7 +9,7 @@ Siga na ordem. Limite total de 3 tentativas por tarefa; na terceira falha, pare 
 `bash bin/kuru route "<tarefa>" --files <arquivos que você já sabe>` e leia o JSON:
 - `acao: direto`: faça você mesmo, sem agente. Se vier `delegar_se`, só delegue quando essa condição for verdadeira.
 - `acao: agente`: siga o passo 3. `incerta: true` significa sinal fraco; na dúvida, assuma o tier de cima.
-- `risco: true`: tarefa de risco alto; o DeepSeek fica de fora da cadeia.
+- `risco: true`: tarefa de risco alto (o roteador já subiu um tier); revise com mais atenção.
 
 ## 1b. Onde trabalhar (o usuário pode estar editando na IDE)
 Tarefa longa ou que demora: `bash bin/kuru worktree create <id>` (JSON com `path`, `branch`, `base`). Todo o resto roda lá; a árvore principal é do usuário e o worktree nasce do último commit, sem as edições não commitadas dele. Tarefa curta na árvore principal: confira `git status --short` antes e não toque em arquivo sujo que não é seu.
@@ -24,7 +24,7 @@ Peça sempre resposta curta (até 15 linhas): o que volta ao seu contexto també
 - **complexa**: chame `planner` com o briefing e peça um plano de até 25 linhas; depois implemente você mesmo ou com `implementer-sonnet` (briefing + plano).
 - **explorar muito** (`delegar_se`): `implementer-sonnet` com o briefing.
 - **mecânica repetida em muitos arquivos**: `implementer-haiku`.
-- **longa**: `planner` com o briefing (plano de até 25 linhas, já separando os arquivos em grupos independentes). Depois rode de 3 a 5 `implementer-sonnet` em paralelo, UMA chamada por grupo na mesma resposta, cada um com o seu briefing (só os arquivos do grupo + o trecho do plano) e sem se sobrepor nos arquivos. Reserva: se o limite do Claude acabar e a tarefa não tiver `risco`, `deepseek-coder` (ele chama a API com a chave do ambiente e devolve um diff validado; falha de chave, saldo ou limite, códigos 2, 3, 76, ou código 4 sem diff válido conta como tentativa). Se nada estiver disponível, pare e reporte.
+- **longa**: `planner` com o briefing (plano de até 25 linhas, já separando os arquivos em grupos independentes). Depois rode de 3 a 5 `implementer-sonnet` em paralelo, UMA chamada por grupo na mesma resposta, cada um com o seu briefing (só os arquivos do grupo + o trecho do plano) e sem se sobrepor nos arquivos. Não há modelo de reserva: se o limite do Claude acabar, pare e reporte.
 
 ## 4. Verifique
 `bash bin/kuru check-rules` e a suíte de testes do projeto (com worktree, rode dentro dele). Falhou: corrija (conta como tentativa).

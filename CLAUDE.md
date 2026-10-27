@@ -11,7 +11,7 @@ O kit mora em `.claude/` (agents e skills), `harness/`, `bin/kuru` (launcher que
 - Máximo de 3 tentativas por tarefa; na terceira falha, pare e reporte. Não tente uma quarta.
 - Chaves e tokens só em variável de ambiente, nunca em arquivo.
 - Commits coesos por intenção, em português, sem push forçado nem reescrita de histórico.
-- Teto de US$ 5/mês em DeepSeek e Higgsfield. O kit NÃO soma gasto: o limite real é o saldo pré-pago na conta do provedor e a aprovação do usuário a cada geração. Jev sem teto, mas sem loops.
+- Teto de US$ 5/mês na Higgsfield. O kit NÃO soma gasto: o limite real é o saldo pré-pago na conta do provedor e a aprovação do usuário a cada geração. Jev sem teto, mas sem loops.
 - Agentes em paralelo: de 3 a 5.
 
 ## Autonomia: quando delegar
@@ -24,13 +24,13 @@ Delegar custa tokens (prompt do agente, briefing e resposta). Só compensa se po
 - a tarefa for longa (8+ arquivos, reescrita): `planner` e depois de 3 a 5 `implementer-sonnet` em paralelo, cada um com um grupo independente de arquivos e o seu briefing;
 - precisar de revisão independente de mudança NÃO trivial: `reviewer` (contexto limpo);
 - precisar checar se as instruções do projeto e o código ainda batem (lê muito, 1M de contexto): `auditor`, sob demanda ou antes de fechar fase, não a cada tarefa. Chame com só a raiz e o foco (nunca a conversa) e NÃO releia o que ele leu: ele devolve só o relatório (até 25 linhas), você aplica ou descarta as propostas;
-- for decisão fechada de baixo risco: `jev-judge`; imagem ou vídeo: `creative`; reserva barata de texto: `deepseek-coder`.
+- for decisão fechada de baixo risco: `jev-judge`; imagem ou vídeo: `creative`.
 **Antes de editar qualquer tarefa que toque 3+ arquivos ou tenha decisão de design, rode `bash bin/kuru route "<tarefa>" --files <todos os arquivos que a mudança toca>` (grátis, sem modelo; a lista incompleta engana o roteador) e siga o `acao` e os `agents` dele; se for `agente`, carregue a skill `delegar`.** Troca mecânica que um `sed` ou script resolve você faz direto, sem `implementer-haiku`.
 **Isolamento:** todo agente começa SEM contexto. Dê só um briefing autocontido (`bash bin/kuru brief ...`), nunca a conversa, e peça resposta curta (até 15 linhas). Cada agente já carrega o que precisa na própria definição.
 **Revisão:** mudança trivial: `bash bin/kuru check-rules` basta (o hook de fim de tarefa também roda). Não trivial: fluxo de 3 estágios da skill `delegar`; o revisor recebe só diff + regras relevantes.
 
 ## Provedores e chaves
-Variáveis de ambiente: `DEEPSEEK_API_KEY` (DeepSeek, OpenRouter `sk-or-` ou Workers AI com `CLOUDFLARE_ACCOUNT_ID`), `JEV_API_KEY` (Workers AI), `HIGGSFIELD_API_KEY` (só gera com `--yes` e com a aprovação do usuário). Conferir sem gastar: `bash bin/kuru ask-deepseek --dry-run`. O Jev erra com confiança alta (87,5% de acerto contra 97,5% do Haiku): é indício, nunca prova, e não serve de porteiro de diffs. Os formatos completos estão nas definições de `jev-judge`, `creative` e `deepseek-coder` e em `bash bin/kuru ask-jev --example`.
+Variáveis de ambiente: `JEV_API_KEY` (Workers AI, com `CLOUDFLARE_ACCOUNT_ID`), `HIGGSFIELD_API_KEY` (só gera com `--yes` e com a aprovação do usuário). Conferir sem gastar: `bash bin/kuru ask-jev --dry-run`. O Jev erra com confiança alta (87,5% de acerto contra 97,5% do Haiku): é indício, nunca prova, e não serve de porteiro de diffs. Os formatos completos estão nas definições de `jev-judge` e `creative` e em `bash bin/kuru ask-jev --example`.
 
 ## Cursor + Claude (em paralelo)
 O usuário programa na IDE (Cursor, que lê as mesmas skills de `.claude/`) enquanto você roda tarefas longas. A árvore principal é DELE.

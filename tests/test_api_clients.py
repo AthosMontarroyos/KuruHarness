@@ -2,8 +2,6 @@ import contextlib
 import io
 import json
 import os
-import subprocess
-import tempfile
 import threading
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -12,18 +10,11 @@ from unittest import mock
 from harness import higgsfield, llm
 
 # chaves falsas montadas em runtime: o scanner de segredos do repo não deve achar nada no fonte
-DS = "sk-" + "d" * 20
 OR = "sk-or-" + "v1-" + "o" * 20
 CF = "cf" + "T" * 30
 HF = "hf" + "K" * 20
-ENV_NAMES = ("DEEPSEEK_API_KEY", "DEEP_SEEK_API_KEY", "DEEPSEEK_PROVIDER", "DEEPSEEK_BASE_URL", "DEEPSEEK_MODEL",
-             "JEV_API_KEY", "JEV_PROVIDER", "JEV_BASE_URL", "JEV_MODEL", "CLOUDFLARE_ACCOUNT_ID", "CF_ACCOUNT_ID",
+ENV_NAMES = ("JEV_API_KEY", "JEV_PROVIDER", "JEV_BASE_URL", "JEV_MODEL", "CLOUDFLARE_ACCOUNT_ID", "CF_ACCOUNT_ID",
              "HIGGSFIELD_API_KEY", "HIGGSFIELD_BASE_URL")
-
-
-def read(path):
-    with open(path, encoding="utf-8") as f:
-        return f.read()
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -54,13 +45,6 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(402, {"error": "Insufficient Balance"})
         if p.endswith("/e401/chat/completions"):
             return self._send(401, {"error": "bad key " + self.headers["Authorization"]})
-        if "/diffok/" in p:
-            txt = "Aqui está:\n```diff\n--- a/a.txt\n+++ b/a.txt\n@@ -1 +1 @@\n-ola mundo\n+ola harness\n```\nFeito."
-            return self._send(200, {"choices": [{"message": {"content": txt}}], "usage": {}})
-        if "/nodiff/" in p:
-            return self._send(200, {"choices": [{"message": {"content": "não sei fazer isso"}}], "usage": {}})
-        if p.endswith("/chat/completions"):
-            return self._send(200, {"choices": [{"message": {"content": "<think>pensando</think>\n\nola"}}], "usage": {"total_tokens": 5}})
         if p.endswith("/jevfail"):
             return self._send(200, {"success": False, "errors": [{"code": 7003, "message": "User Input Error"}]})
         if p.endswith("/jev"):
@@ -110,115 +94,6 @@ class ApiTest(unittest.TestCase):
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
             code = fn(args)
         return code, out.getvalue(), err.getvalue()
-
-    # ---------- DeepSeek (qualquer provedor) ----------
-    def test_deepseek_key_sends_bearer_model_and_strips_think(self):
-        code, out, _ = self.run_cli(llm.deepseek_main, ["--prompt", "oi", "--system", "seja breve"],
-                                    DEEPSEEK_API_KEY=DS, DEEPSEEK_BASE_URL=self.base + "/ok")
-        self.assertEqual((code, out.strip()), (0, "ola"))
-        req = Handler.log[0]
-        self.assertEqual(req["path"], "/ok/chat/completions")
-        self.assertEqual(req["headers"]["Authorization"], f"Bearer {DS}")
-        self.assertEqual(req["body"]["model"], "deepseek-chat")
-        self.assertEqual([m["role"] for m in req["body"]["messages"]], ["system", "user"])
-
-    def test_openrouter_key_picks_openrouter_model_and_model_override_wins(self):
-        self.run_cli(llm.deepseek_main, ["--prompt", "oi"], DEEPSEEK_API_KEY=OR, DEEPSEEK_BASE_URL=self.base + "/ok")
-        self.assertEqual(Handler.log[0]["body"]["model"], "deepseek/deepseek-v3.2")
-        self.run_cli(llm.deepseek_main, ["--prompt", "oi"], DEEPSEEK_MODEL="deepseek/deepseek-v4-flash")
-        self.assertEqual(Handler.log[1]["body"]["model"], "deepseek/deepseek-v4-flash")
-
-    def test_alias_name_works_without_cloudflare_account_id(self):
-        # regressão: a URL do Workers AI era montada mesmo para chave do DeepSeek e exigia a conta
-        code, out, err = self.run_cli(llm.deepseek_main, ["--dry-run"], DEEP_SEEK_API_KEY=DS)
-        self.assertEqual(code, 0, err)
-        self.assertEqual(json.loads(out)["provider"], "deepseek")
-
-    def test_provider_detection_and_workers_ai_needs_account(self):
-        self.assertEqual(llm.detect_provider(DS), "deepseek")
-        self.assertEqual(llm.detect_provider(OR), "openrouter")
-        self.assertEqual(llm.detect_provider(CF), "workers-ai")
-        self.assertEqual(llm.detect_provider(DS, "workers_ai"), "workers-ai")
-        with self.assertRaises(llm.ConfigError):
-            llm.detect_provider(DS, "outro")
-        code, _, err = self.run_cli(llm.deepseek_main, ["--dry-run"], DEEPSEEK_API_KEY=CF)
-        self.assertEqual(code, 2)
-        self.assertIn("CLOUDFLARE_ACCOUNT_ID", err)
-        code, out, _ = self.run_cli(llm.deepseek_main, ["--dry-run"], DEEPSEEK_API_KEY=CF, CLOUDFLARE_ACCOUNT_ID="acct1")
-        cfg = json.loads(out)
-        self.assertIn("/accounts/acct1/ai/v1/chat/completions", cfg["url"])
-        self.assertIn("deepseek-r1-distill", cfg["model"])
-
-    def test_dry_run_never_prints_the_key(self):
-        _, out, err = self.run_cli(llm.deepseek_main, ["--dry-run"], DEEPSEEK_API_KEY=DS)
-        self.assertNotIn(DS, out + err)
-        self.assertIn("caracteres", out)
-
-    def test_balance_error_is_76_and_bad_key_is_3_without_leaking_the_key(self):
-        code, _, err = self.run_cli(llm.deepseek_main, ["--prompt", "oi"], DEEPSEEK_API_KEY=DS, DEEPSEEK_BASE_URL=self.base + "/e402")
-        self.assertEqual(code, 76)
-        self.assertIn("saldo", err)
-        code, _, err = self.run_cli(llm.deepseek_main, ["--prompt", "oi"], DEEPSEEK_API_KEY=DS, DEEPSEEK_BASE_URL=self.base + "/e401")
-        self.assertEqual(code, 3)
-        self.assertNotIn(DS, err)
-        self.assertIn("***", err)
-
-    def test_no_key_is_config_error(self):
-        code, out, err = self.run_cli(llm.deepseek_main, ["--prompt", "oi"])
-        self.assertEqual((code, out), (2, ""))
-        self.assertIn("DEEPSEEK_API_KEY", err)
-        self.assertEqual(Handler.log, [])
-
-    # ---------- DeepSeek: --diff-out e --out ----------
-    def repo_with(self, content):
-        d = tempfile.TemporaryDirectory()
-        self.addCleanup(d.cleanup)
-        old = os.getcwd()
-        os.chdir(d.name)
-        self.addCleanup(os.chdir, old)
-        subprocess.run(["git", "init", "-q"], check=True)
-        with open("a.txt", "w") as f:
-            f.write(content)
-        return d.name
-
-    def test_diff_out_extracts_block_and_validates_with_git_apply(self):
-        self.repo_with("ola mundo\n")
-        code, out, err = self.run_cli(llm.deepseek_main, ["--prompt", "troque", "--diff-out", ".kuru/t.diff"],
-                                      DEEPSEEK_API_KEY=DS, DEEPSEEK_BASE_URL=self.base + "/diffok")
-        self.assertEqual(code, 0, err)
-        res = json.loads(out)
-        self.assertEqual((res["git_apply_check"], res["diff"], res["provedor"]), ("ok", ".kuru/t.diff", "deepseek"))
-        diff = read(".kuru/t.diff")
-        self.assertTrue(diff.startswith("--- a/a.txt") and diff.endswith("+ola harness\n"))
-        self.assertNotIn("```", diff)
-        self.assertEqual(read("a.txt"), "ola mundo\n")  # só valida, nunca aplica
-
-    def test_diff_out_exit_4_when_diff_does_not_apply_or_is_missing(self):
-        self.repo_with("conteudo diferente\n")
-        code, out, _ = self.run_cli(llm.deepseek_main, ["--prompt", "x", "--diff-out", "t.diff"],
-                                    DEEPSEEK_API_KEY=DS, DEEPSEEK_BASE_URL=self.base + "/diffok")
-        self.assertEqual(code, 4)
-        self.assertNotEqual(json.loads(out)["git_apply_check"], "ok")
-        code, out, err = self.run_cli(llm.deepseek_main, ["--prompt", "x", "--diff-out", "t2.diff"],
-                                      DEEPSEEK_API_KEY=DS, DEEPSEEK_BASE_URL=self.base + "/nodiff")
-        self.assertEqual((code, out), (4, ""))
-        self.assertIn("diff unificado", err)
-        self.assertFalse(os.path.exists("t2.diff"))
-
-    def test_out_writes_file_instead_of_printing_the_answer(self):
-        self.repo_with("x\n")
-        code, out, _ = self.run_cli(llm.deepseek_main, ["--prompt", "oi", "--out", ".kuru/r.txt"],
-                                    DEEPSEEK_API_KEY=DS, DEEPSEEK_BASE_URL=self.base + "/ok")
-        self.assertEqual(code, 0)
-        self.assertEqual(read(".kuru/r.txt").strip(), "ola")
-        self.assertEqual(json.loads(out)["saida"], ".kuru/r.txt")
-
-    def test_extract_diff_variants(self):
-        d = "--- a/x\n+++ b/x\n@@ -1 +1 @@\n-a\n+b\n"
-        self.assertEqual(llm.extract_diff("texto\n```diff\n" + d + "```\nfim"), d)
-        self.assertEqual(llm.extract_diff("```\n" + d + "```"), d)
-        self.assertEqual(llm.extract_diff(d), d)
-        self.assertEqual(llm.extract_diff("```python\nprint(1)\n```"), "")
 
     # ---------- Jev ----------
     def jev_args(self, questions):

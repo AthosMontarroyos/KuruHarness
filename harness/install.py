@@ -52,7 +52,8 @@ def merge_claude_md(existing, block):
 
 def merge_settings(settings, cmd, base):
     allow = settings.setdefault("permissions", {}).setdefault("allow", [])
-    for rule in (f"Bash({cmd} *)", "Bash(git diff*)", "Bash(git status*)", "Bash(git apply*)", "Bash(git add -N*)"):
+    for rule in (f"Bash({cmd} *)", "Bash(git diff*)", "Bash(git status*)", "Bash(git apply*)", "Bash(git add -N*)",
+                 "Bash(git -C * diff*)", "Bash(git -C * status*)", "Bash(git -C * add -N*)"):
         if rule not in allow:
             allow.append(rule)
     stop = settings.setdefault("hooks", {}).setdefault("Stop", [])

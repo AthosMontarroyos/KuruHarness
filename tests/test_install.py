@@ -91,6 +91,15 @@ class InstallTest(unittest.TestCase):
         self.assertFalse((self.dest / "kuru/scripts/cursor-task.sh").exists())
         self.assertTrue((self.dest / "kuru/harness/worktree.py").exists())
 
+    def test_git_c_rules_for_the_worktree_review_are_allowed_in_project_and_global_settings(self):
+        rules = ("Bash(git -C * diff*)", "Bash(git -C * status*)", "Bash(git -C * add -N*)")
+        install.install(self.dest)
+        glob = json.loads((self.dest / "settings.json").read_text(encoding="utf-8"))["permissions"]["allow"]
+        proj = json.loads((ROOT / ".claude/settings.json").read_text(encoding="utf-8"))["permissions"]["allow"]
+        for r in rules:
+            self.assertIn(r, glob)
+            self.assertIn(r, proj)
+
     def test_dry_run_writes_nothing(self):
         install.install(self.dest, dry_run=True)
         self.assertFalse((self.dest / "agents").exists())

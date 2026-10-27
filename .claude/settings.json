@@ -5,7 +5,10 @@
       "Bash(git diff*)",
       "Bash(git status*)",
       "Bash(git apply*)",
-      "Bash(git add -N*)"
+      "Bash(git add -N*)",
+      "Bash(git -C * diff*)",
+      "Bash(git -C * status*)",
+      "Bash(git -C * add -N*)"
     ]
   },
   "hooks": {
