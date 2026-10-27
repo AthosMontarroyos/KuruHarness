@@ -31,16 +31,20 @@ def project_rules(claude_md="CLAUDE.md"):
     raise BriefError(f'seção "{RULES_HEADER}" não encontrada no CLAUDE.md')
 
 
-def build(task, files=(), criteria="", tests="", rules=None):
+def build(task, files=(), criteria="", tests="", rules=None, workdir=""):
     if not task or not task.strip():
         raise BriefError("a tarefa não pode ser vazia")
     rules = project_rules() if rules is None else rules
     files_txt = "\n".join(f"- {f}" for f in files) if files else "- (nenhum arquivo indicado: descubra quais precisa ler, e leia só o necessário)"
     tests_txt = f"`{tests}`" if tests else "os testes e linters que o projeto tiver (veja package.json, pyproject.toml ou a pasta tests/)"
+    where = f"""# Onde trabalhar
+Trabalhe SOMENTE em `{workdir}` (worktree git isolado): edite só arquivos dentro dele e rode todos os comandos lá (`cd {workdir}`). NÃO toque no diretório principal do projeto: o usuário está editando nele na IDE ao mesmo tempo. Os caminhos abaixo são relativos ao worktree.
+
+""" if workdir else ""
     return f"""# Tarefa
 {task.strip()}
 
-# Arquivos
+{where}# Arquivos
 {files_txt}
 Leia antes de editar. Não altere nenhum outro arquivo além do que a tarefa exige.
 
@@ -68,6 +72,7 @@ def main(argv=None):
     p.add_argument("--files", nargs="*", default=[])
     p.add_argument("--criteria", default="")
     p.add_argument("--tests", default="", help="comando de teste do projeto (padrão: o agente descobre)")
+    p.add_argument("--workdir", default="", help="worktree isolado onde o agente deve trabalhar (kuru worktree create)")
     p.add_argument("--out", help="grava o briefing neste arquivo em vez de imprimir")
     p.add_argument("--print-rules", action="store_true", help="imprime só as regras para quem codifica")
     a = p.parse_args(argv)
@@ -75,7 +80,7 @@ def main(argv=None):
         if a.print_rules:
             print(project_rules())
             return 0
-        text = build(a.task, a.files, a.criteria, a.tests)
+        text = build(a.task, a.files, a.criteria, a.tests, workdir=a.workdir)
     except BriefError as e:
         print(f"erro: {e}", file=sys.stderr)
         return 2

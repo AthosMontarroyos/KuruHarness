@@ -19,6 +19,7 @@ COMMANDS = {
     "ask-jev": "harness.llm:jev_main",
     "higgsfield": "harness.higgsfield",
     "install": "harness.install",
+    "worktree": "harness.worktree",
 }
 
 

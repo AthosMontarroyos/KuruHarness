@@ -83,10 +83,13 @@ class InstallTest(unittest.TestCase):
         self.assertFalse(gone.exists())
         self.assertTrue(edited.exists())
 
-    def test_global_block_has_no_cursor(self):
+    def test_global_block_treats_cursor_as_the_users_ide_not_as_a_cli_to_call(self):
         install.install(self.dest)
-        self.assertNotIn("Cursor", (self.dest / "CLAUDE.md").read_text(encoding="utf-8"))
+        md = (self.dest / "CLAUDE.md").read_text(encoding="utf-8")
+        self.assertNotIn("cursor-task", md)  # o Cursor não é chamado pelo Bash (integração removida)
+        self.assertIn("kuru/bin/kuru worktree create", md)  # mas a convivência com a IDE vale em todo projeto
         self.assertFalse((self.dest / "kuru/scripts/cursor-task.sh").exists())
+        self.assertTrue((self.dest / "kuru/harness/worktree.py").exists())
 
     def test_dry_run_writes_nothing(self):
         install.install(self.dest, dry_run=True)

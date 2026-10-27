@@ -8,7 +8,14 @@ KURU="$(cd "$(dirname "${BASH_SOURCE[0]}")/../bin" && pwd)/kuru"
 cd "${CLAUDE_PROJECT_DIR:-.}"
 # O Claude Code passa um JSON (session_id, transcript_path) no stdin; sem stdin, segue sem ele.
 HOOK_INPUT=""; if [ ! -t 0 ]; then HOOK_INPUT=$(timeout 2 cat 2>/dev/null || true); fi; export HOOK_INPUT
-STATE=.claude/state; mkdir -p "$STATE"
+MAIN="$PWD"; STATE="$MAIN/.claude/state"; mkdir -p "$STATE"
+# Tarefa longa em worktree isolado (kuru worktree create): confere o que o Claude fez lá, não a edição do usuário na IDE.
+WORK="$MAIN"; BASE=""
+if [ -f .kuru/active-worktree ]; then
+  wt=$(sed -n 1p .kuru/active-worktree | tr -d '\r'); BASE=$(sed -n 2p .kuru/active-worktree | tr -d '\r')
+  [ -d "$wt" ] && WORK="$wt" || BASE=""
+fi
+cd "$WORK"
 MAX=3
 n=$(cat "$STATE/attempts" 2>/dev/null || echo 0)
 
@@ -36,9 +43,11 @@ else
 fi
 
 log_task() { # resultado, tentativas -> .claude/state/tasks.jsonl (nunca derruba o hook)
-  bash "$KURU" hooklog --result "$1" --attempts "$2" 2>/dev/null || true
+  (cd "$MAIN" && bash "$KURU" hooklog --result "$1" --attempts "$2" 2>/dev/null) || true
 }
 dirty=$(git status --porcelain -- . ':!.claude/state' 2>/dev/null | head -n 1)
+# no worktree o trabalho costuma estar commitado: commits além da base também contam como trabalho
+[ -z "$dirty" ] && [ -n "$BASE" ] && [ "$(git rev-list --count "$BASE"..HEAD 2>/dev/null || echo 0)" -gt 0 ] && dirty=commits
 
 if [ $fail -eq 0 ]; then
   # só registra quando houve trabalho (mudanças pendentes ou falhas anteriores)
