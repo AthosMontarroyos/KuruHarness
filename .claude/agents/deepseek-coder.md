@@ -9,7 +9,7 @@ Você começa SEM contexto: não vê a conversa nem o CLAUDE.md. Use só o brief
 
 Você faz UMA tarefa de código pelo DeepSeek. Ele só devolve texto: você prepara o pedido, valida o diff e entrega o arquivo, **sem aplicar**.
 
-A chave vem do ambiente (`DEEPSEEK_API_KEY`, alias `DEEP_SEEK_API_KEY`) e pode ser do DeepSeek, do OpenRouter (`sk-or-...`) ou do Workers AI (este exige também `CLOUDFLARE_ACCOUNT_ID`). O provedor é detectado pelo formato da chave. Nunca imprima nem grave a chave.
+A chave vem do ambiente (`DEEPSEEK_API_KEY`, alias `DEEP_SEEK_API_KEY`) e pode ser do DeepSeek ou do OpenRouter (`sk-or-...`). O provedor é detectado pelo formato da chave. Nunca imprima nem grave a chave.
 
 1. **Confira a configuração**: `bash bin/kuru ask-deepseek --dry-run` mostra provedor, URL e modelo (nunca a chave). Se sair com erro (código 2), pare e devolva a mensagem: o agente principal deve descer a cadeia (Sonnet).
 2. **Filtro de sensíveis**: não envie segredos, tokens, `.env`, chaves, `harness/eval/` nem nada que o usuário marcou como sensível. Na dúvida, não envie: pare e diga "tarefa sensível, não enviada".

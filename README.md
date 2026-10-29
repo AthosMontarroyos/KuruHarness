@@ -32,9 +32,9 @@ A divisão é por **quem mexe em quê**, não por quem chama quem: você program
 ## Chaves (variáveis de ambiente)
 | Variável | Para quê | Observação |
 |---|---|---|
-| `DEEPSEEK_API_KEY` (ou `DEEP_SEEK_API_KEY`) | `deepseek-coder` | chave do DeepSeek, do OpenRouter (`sk-or-...`) ou do Workers AI; o provedor é detectado pelo formato |
+| `DEEPSEEK_API_KEY` (ou `DEEP_SEEK_API_KEY`) | `deepseek-coder` | chave do DeepSeek ou do OpenRouter (`sk-or-...`); o provedor é detectado pelo formato |
 | `JEV_API_KEY` | `jev-judge` | chave do Workers AI (o Jev estruturado só existe lá) |
-| `CLOUDFLARE_ACCOUNT_ID` | Workers AI | necessário quando alguma chave for do Workers AI |
+| `CLOUDFLARE_ACCOUNT_ID` | `jev-judge` | necessário para o Jev (Workers AI) |
 | `HIGGSFIELD_API_KEY` | `creative` | cada geração gasta crédito e só roda com aprovação do usuário |
 
 Para trocar provedor ou modelo: `DEEPSEEK_PROVIDER`, `DEEPSEEK_BASE_URL`, `DEEPSEEK_MODEL`, `JEV_PROVIDER` (só `workers-ai`), `JEV_BASE_URL`, `JEV_MODEL`. Para conferir sem gastar: `bash bin/kuru ask-deepseek --dry-run`, `bash bin/kuru ask-jev --dry-run`.

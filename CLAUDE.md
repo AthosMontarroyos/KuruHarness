@@ -30,7 +30,7 @@ Delegar custa tokens (prompt do agente, briefing e resposta). Só compensa se po
 **Revisão:** mudança trivial: `bash bin/kuru check-rules` basta (o hook de fim de tarefa também roda). Não trivial: fluxo de 3 estágios da skill `delegar`; o revisor recebe só diff + regras relevantes.
 
 ## Provedores e chaves
-Variáveis de ambiente: `DEEPSEEK_API_KEY` (DeepSeek, OpenRouter `sk-or-` ou Workers AI com `CLOUDFLARE_ACCOUNT_ID`), `JEV_API_KEY` (Workers AI), `HIGGSFIELD_API_KEY` (só gera com `--yes` e com a aprovação do usuário). Conferir sem gastar: `bash bin/kuru ask-deepseek --dry-run`. O Jev erra com confiança alta (87,5% de acerto contra 97,5% do Haiku): é indício, nunca prova, e não serve de porteiro de diffs. Os formatos completos estão nas definições de `jev-judge`, `creative` e `deepseek-coder` e em `bash bin/kuru ask-jev --example`.
+Variáveis de ambiente: `DEEPSEEK_API_KEY` (DeepSeek ou OpenRouter `sk-or-`), `JEV_API_KEY` (Workers AI, com `CLOUDFLARE_ACCOUNT_ID`), `HIGGSFIELD_API_KEY` (só gera com `--yes` e com a aprovação do usuário). Conferir sem gastar: `bash bin/kuru ask-deepseek --dry-run`. O Jev erra com confiança alta (87,5% de acerto contra 97,5% do Haiku): é indício, nunca prova, e não serve de porteiro de diffs. Os formatos completos estão nas definições de `jev-judge`, `creative` e `deepseek-coder` e em `bash bin/kuru ask-jev --example`.
 
 ## Cursor + Claude (em paralelo)
 O usuário programa na IDE (Cursor, que lê as mesmas skills de `.claude/`) enquanto você roda tarefas longas. A árvore principal é DELE.

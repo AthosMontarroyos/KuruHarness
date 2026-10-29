@@ -1,10 +1,10 @@
 """Chamadas diretas por API, sem MCP, sem plugin e sem comandos: DeepSeek e Jev.
 
 A chave vem de variável de ambiente e pode ser de provedores diferentes:
-  DEEPSEEK_API_KEY (ou DEEP_SEEK_API_KEY): chave do DeepSeek, do OpenRouter (sk-or-...) ou do Workers AI.
+  DEEPSEEK_API_KEY (ou DEEP_SEEK_API_KEY): chave do DeepSeek ou do OpenRouter (sk-or-...).
   JEV_API_KEY: chave do Workers AI (o Jev estruturado, `typesafe/jev`, só existe lá).
-  CLOUDFLARE_ACCOUNT_ID: obrigatório quando a chave é do Workers AI.
-Opcionais: *_PROVIDER (deepseek | openrouter | workers-ai), *_BASE_URL, *_MODEL.
+  CLOUDFLARE_ACCOUNT_ID: obrigatório para o Jev.
+Opcionais: DEEPSEEK_PROVIDER (deepseek | openrouter), JEV_PROVIDER (workers-ai), *_BASE_URL, *_MODEL.
 
 Saídas: 0 ok | 2 configuração/entrada inválida | 3 erro do provedor | 4 resposta sem diff válido | 76 saldo ou limite esgotado.
 A chave nunca é impressa.
@@ -20,11 +20,10 @@ import urllib.request
 
 DEEPSEEK_KEYS = ("DEEPSEEK_API_KEY", "DEEP_SEEK_API_KEY")
 ACCOUNT_KEYS = ("CLOUDFLARE_ACCOUNT_ID", "CF_ACCOUNT_ID")
-PROVIDERS = ("deepseek", "openrouter", "workers-ai")
+PROVIDERS = ("deepseek", "openrouter")
 DEFAULT_MODEL = {
     "deepseek": "deepseek-chat",
     "openrouter": "deepseek/deepseek-v3.2",
-    "workers-ai": "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b",  # roda no plano gratuito; o v4 exige plano pago
 }
 JEV_TYPES = ("noul", "choice", "score")
 JEV_EXAMPLE = {
@@ -65,7 +64,8 @@ def detect_provider(key, explicit=""):
         return "openrouter"
     if key.startswith("sk-"):
         return "deepseek"
-    return "workers-ai"  # tokens da Cloudflare não têm prefixo fixo
+    raise ConfigError("formato de chave desconhecido para DEEPSEEK_API_KEY (use uma chave do DeepSeek ou do "
+                       "OpenRouter, ou defina DEEPSEEK_PROVIDER)")
 
 
 def _account(env):
@@ -79,14 +79,10 @@ def resolve_deepseek(env=None):
     env = os.environ if env is None else env
     key = first_env(DEEPSEEK_KEYS, env)
     if not key:
-        raise ConfigError("defina DEEPSEEK_API_KEY (chave do DeepSeek, do OpenRouter ou do Workers AI)")
+        raise ConfigError("defina DEEPSEEK_API_KEY (chave do DeepSeek ou do OpenRouter)")
     provider = detect_provider(key, env.get("DEEPSEEK_PROVIDER", ""))
-    base = (env.get("DEEPSEEK_BASE_URL") or "").rstrip("/")
-    if not base:
-        if provider == "workers-ai":  # só este provedor precisa do id da conta
-            base = f"https://api.cloudflare.com/client/v4/accounts/{_account(env)}/ai/v1"
-        else:
-            base = {"deepseek": "https://api.deepseek.com", "openrouter": "https://openrouter.ai/api/v1"}[provider]
+    base = (env.get("DEEPSEEK_BASE_URL") or "").rstrip("/") or \
+        {"deepseek": "https://api.deepseek.com", "openrouter": "https://openrouter.ai/api/v1"}[provider]
     model = (env.get("DEEPSEEK_MODEL") or "").strip() or DEFAULT_MODEL[provider]
     return {"provider": provider, "url": base + "/chat/completions", "model": model, "key": key}
 

@@ -128,26 +128,19 @@ class ApiTest(unittest.TestCase):
         self.run_cli(llm.deepseek_main, ["--prompt", "oi"], DEEPSEEK_MODEL="deepseek/deepseek-v4-flash")
         self.assertEqual(Handler.log[1]["body"]["model"], "deepseek/deepseek-v4-flash")
 
-    def test_alias_name_works_without_cloudflare_account_id(self):
-        # regressão: a URL do Workers AI era montada mesmo para chave do DeepSeek e exigia a conta
+    def test_alias_name_works(self):
         code, out, err = self.run_cli(llm.deepseek_main, ["--dry-run"], DEEP_SEEK_API_KEY=DS)
         self.assertEqual(code, 0, err)
         self.assertEqual(json.loads(out)["provider"], "deepseek")
 
-    def test_provider_detection_and_workers_ai_needs_account(self):
+    def test_provider_detection(self):
         self.assertEqual(llm.detect_provider(DS), "deepseek")
         self.assertEqual(llm.detect_provider(OR), "openrouter")
-        self.assertEqual(llm.detect_provider(CF), "workers-ai")
-        self.assertEqual(llm.detect_provider(DS, "workers_ai"), "workers-ai")
+        self.assertEqual(llm.detect_provider(DS, "openrouter"), "openrouter")
         with self.assertRaises(llm.ConfigError):
             llm.detect_provider(DS, "outro")
-        code, _, err = self.run_cli(llm.deepseek_main, ["--dry-run"], DEEPSEEK_API_KEY=CF)
-        self.assertEqual(code, 2)
-        self.assertIn("CLOUDFLARE_ACCOUNT_ID", err)
-        code, out, _ = self.run_cli(llm.deepseek_main, ["--dry-run"], DEEPSEEK_API_KEY=CF, CLOUDFLARE_ACCOUNT_ID="acct1")
-        cfg = json.loads(out)
-        self.assertIn("/accounts/acct1/ai/v1/chat/completions", cfg["url"])
-        self.assertIn("deepseek-r1-distill", cfg["model"])
+        with self.assertRaises(llm.ConfigError):
+            llm.detect_provider(CF)  # chave sem prefixo de deepseek/openrouter (ex.: token da Cloudflare)
 
     def test_dry_run_never_prints_the_key(self):
         _, out, err = self.run_cli(llm.deepseek_main, ["--dry-run"], DEEPSEEK_API_KEY=DS)
