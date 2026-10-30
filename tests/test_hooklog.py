@@ -80,9 +80,9 @@ class HookScriptTest(unittest.TestCase):
     def set_test(self, passing):
         self.test_file.write_text("import unittest\nclass T(unittest.TestCase):\n    def test(self):\n        self.assertTrue(%s)\n" % passing)
 
-    def run_hook(self, stdin=""):
+    def run_hook(self, stdin="", *args):
         env = dict(os.environ, CLAUDE_PROJECT_DIR=str(self.d))
-        r = subprocess.run(["bash", str(self.d / "scripts/end-of-task.sh")], input=stdin, env=env,
+        r = subprocess.run(["bash", str(self.d / "scripts/end-of-task.sh"), *args], input=stdin, env=env,
                            cwd=self.d, capture_output=True, text=True)
         return r.returncode
 
@@ -108,6 +108,11 @@ class HookScriptTest(unittest.TestCase):
         self.assertEqual(self.run_hook(), 0)
         rec = self.records()
         self.assertEqual((rec[0]["result"], rec[0]["attempts"]), ("ok", 3))
+
+    def test_diff_mode_does_not_run_project_suite(self):
+        self.set_test(False)  # suíte do projeto quebrada: no modo global não pode reprovar
+        (self.d / "package.json").write_text('{"scripts":{"test":"exit 1"}}')
+        self.assertEqual(self.run_hook("", "--diff"), 0)
 
     def test_third_failure_logs_fail_attempt_3(self):
         self.set_test(False)

@@ -31,16 +31,20 @@ run() { # nome, comando...
   local o; o=$("$@" 2>&1) || { fail=1; out+=$'\n'"== $name falhou =="$'\n'"$(echo "$o" | tail -n 30)"; }
 }
 
-if [ -f package.json ]; then
-  has() { node -e "process.exit((require('./package.json').scripts||{})['$1']?0:1)"; }
-  has test      && run test      npm test --silent
-  has lint      && run lint      npm run lint --silent
-  has typecheck && run typecheck npm run typecheck --silent
+# Suíte do projeto só no repo do próprio kit. Em instalação global (--diff) o projeto é alheio: rodar a suíte dele
+# reprova por falha de ambiente e os testes dele podem gerar arquivos no repo (snapshots, lixo).
+if [ "${KURU_RULES_MODE:-tree}" != diff ]; then
+  if [ -f package.json ]; then
+    has() { node -e "process.exit((require('./package.json').scripts||{})['$1']?0:1)"; }
+    has test      && run test      npm test --silent
+    has lint      && run lint      npm run lint --silent
+    has typecheck && run typecheck npm run typecheck --silent
+  fi
+  [ -f pyproject.toml ] && command -v pytest >/dev/null && run pytest pytest -q
+  [ -f pyproject.toml ] && command -v ruff   >/dev/null && run ruff ruff check .
+  [ -f pyproject.toml ] && command -v mypy   >/dev/null && run mypy mypy .
+  [ -f tests/__init__.py ] && run unittest bash "$KURU" unittest
 fi
-[ -f pyproject.toml ] && command -v pytest >/dev/null && run pytest pytest -q
-[ -f pyproject.toml ] && command -v ruff   >/dev/null && run ruff ruff check .
-[ -f pyproject.toml ] && command -v mypy   >/dev/null && run mypy mypy .
-[ -f tests/__init__.py ] && run unittest bash "$KURU" unittest
 # KURU_RULES_MODE=diff (instalação global): em projeto alheio, confere só o que mudou, não o repo inteiro
 if [ "${KURU_RULES_MODE:-tree}" = diff ]; then
   run regras bash -c 'git diff HEAD 2>/dev/null | bash "$0" check-rules --diff' "$KURU"
