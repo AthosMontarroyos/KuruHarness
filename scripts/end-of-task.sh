@@ -19,6 +19,12 @@ cd "$WORK"
 MAX=3
 n=$(cat "$STATE/attempts" 2>/dev/null || echo 0)
 
+dirty=$(git status --porcelain -- . ':!.claude/state' 2>/dev/null | head -n 1)
+# no worktree o trabalho costuma estar commitado: commits além da base também contam como trabalho
+[ -z "$dirty" ] && [ -n "$BASE" ] && [ "$(git rev-list --count "$BASE"..HEAD 2>/dev/null || echo 0)" -gt 0 ] && dirty=commits
+# turno sem mudança (pergunta, conversa) e sem falha pendente: nada a conferir, não gasta a suíte
+[ -z "$dirty" ] && [ "$n" -eq 0 ] && exit 0
+
 fail=0; out=""
 run() { # nome, comando...
   local name=$1; shift
@@ -45,9 +51,6 @@ fi
 log_task() { # resultado, tentativas -> .claude/state/tasks.jsonl (nunca derruba o hook)
   (cd "$MAIN" && bash "$KURU" hooklog --result "$1" --attempts "$2" 2>/dev/null) || true
 }
-dirty=$(git status --porcelain -- . ':!.claude/state' 2>/dev/null | head -n 1)
-# no worktree o trabalho costuma estar commitado: commits além da base também contam como trabalho
-[ -z "$dirty" ] && [ -n "$BASE" ] && [ "$(git rev-list --count "$BASE"..HEAD 2>/dev/null || echo 0)" -gt 0 ] && dirty=commits
 
 if [ $fail -eq 0 ]; then
   # só registra quando houve trabalho (mudanças pendentes ou falhas anteriores)
